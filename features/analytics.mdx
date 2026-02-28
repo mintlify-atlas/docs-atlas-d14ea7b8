@@ -1,0 +1,469 @@
+---
+title: 'Analytics & Spending Analysis'
+description: 'Visualize subscription spending with interactive charts and detailed breakdowns'
+---
+
+## Overview
+
+Subflow's analytics feature provides comprehensive insights into your subscription spending through interactive pie charts and detailed breakdowns. Track monthly expenses, lifetime costs, and subscription distributions to make informed decisions about your recurring payments.
+
+## Opening Analytics
+
+Access analytics from your dashboard:
+
+<Steps>
+  <Step title="Locate Chart Icon">
+    Find the chart pie icon on your dashboard (typically in the header or subscription overview area).
+  </Step>
+
+  <Step title="Open Dialog">
+    Click the icon to open the full-screen analytics dialog.
+  </Step>
+
+  <Step title="Explore Data">
+    View your spending breakdown and interact with the chart.
+  </Step>
+</Steps>
+
+```tsx
+// components/subscription/chart-dialog.tsx:218
+<DialogTrigger title={t("chartDialog.title")}>
+    <ChartPie className="text-subflow-50 size-6 cursor-pointer rounded-full sm:size-[34px]" />
+</DialogTrigger>
+```
+
+## Pie Chart Visualization
+
+The central feature is an interactive donut chart showing your spending distribution.
+
+### Chart Components
+
+<Tabs>
+  <Tab title="Donut Segments">
+    Each subscription is represented by a segment proportional to its monthly cost:
+    
+    ```tsx
+    // components/subscription/chart-dialog.tsx:246
+    <Pie
+        data={data}
+        cx="50%"
+        cy="50%"
+        innerRadius={isMobile ? screenWidth / 3 - 10 : 190}
+        outerRadius={isMobile ? screenWidth / 3 + 20 : 220}
+        paddingAngle={2.5}       // Space between segments
+        dataKey="value"          // Monthly cost
+        cornerRadius={6}         // Rounded segment edges
+        stroke="#514f50"
+    />
+    ```
+  </Tab>
+
+  <Tab title="Service Icons">
+    Service icons are positioned outside the donut for easy identification:
+    
+    ```tsx
+    // components/subscription/chart-dialog.tsx:84
+    const CustomLabel = (props: PieLabelRenderProps) => {
+        const { cx, cy, midAngle, innerRadius, outerRadius, payload } = props;
+        const RADIAN = Math.PI / 180;
+        
+        // Calculate position outside the donut
+        const radius = (innerRadius + outerRadius) * 2;
+        const x = cx + radius * Math.cos(-midAngle * RADIAN);
+        const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+        return (
+            <foreignObject x={x - 16} y={y - 16} width={32} height={32}>
+                <ServiceIcon serviceId={payload.serviceId} name={payload.name} />
+            </foreignObject>
+        );
+    };
+    ```
+  </Tab>
+
+  <Tab title="Center Display">
+    The center shows your total monthly spending:
+    
+    ```tsx
+    // components/subscription/chart-dialog.tsx:282
+    <text x="50%" y="46%" textAnchor="middle">
+        {t("monthlySpend")}
+    </text>
+    <text x="50%" y="54%" textAnchor="middle">
+        {monthSpend}
+        <tspan className="text-lg" dy="4" dx="4">
+            {currency}
+        </tspan>
+    </text>
+    ```
+  </Tab>
+</Tabs>
+
+## Subscription List
+
+The right sidebar (or below on mobile) shows a detailed breakdown of each subscription.
+
+### List Items Include
+
+<CardGroup cols={2}>
+  <Card title="Service Icon" icon="image">
+    Visual identifier for quick recognition
+  </Card>
+
+  <Card title="Service Name" icon="tag">
+    Full name of the subscription
+  </Card>
+
+  <Card title="Percentage" icon="percent">
+    Portion of total monthly spending
+  </Card>
+
+  <Card title="Monthly Cost" icon="dollar-sign">
+    Amount charged per month
+  </Card>
+
+  <Card title="Total Spend" icon="calculator">
+    Lifetime cost since start date
+  </Card>
+
+  <Card title="Start Date" icon="calendar">
+    When tracking began
+  </Card>
+</CardGroup>
+
+### List Item Component
+
+```tsx
+// components/subscription/chart-dialog.tsx:116
+const SubscriptionListItem = ({ item }: { item: SubscriptionItemProps }) => {
+    return (
+        <div className="bg-subflow-800 hover:bg-subflow-700 rounded-xl p-4">
+            <ServiceIcon serviceId={item.serviceId} name={item.name} />
+            <div className="flex flex-1 flex-col gap-1.5">
+                <span className="text-subflow-50 text-lg">{item.name}</span>
+                
+                {/* Percentage and Monthly Cost */}
+                <div className="flex items-center justify-between">
+                    <span className="text-subflow-300">{item.percentage}%</span>
+                    <span className="text-subflow-50">
+                        <FormattedNumber value={item.value} /> {item.currency}
+                    </span>
+                </div>
+                
+                <hr className="border-subflow-600 border" />
+                
+                {/* Total Spend */}
+                <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-1">
+                        <span className="text-subflow-300 text-sm">
+                            {t("totalSpend")}
+                        </span>
+                        <span className="text-subflow-500 text-[11px]">
+                            {t("since")} {item.startDate.month} / {item.startDate.year}
+                        </span>
+                    </div>
+                    <span className="text-subflow-50">
+                        <FormattedNumber value={item.totalSpend} /> {item.currency}
+                    </span>
+                </div>
+            </div>
+        </div>
+    );
+};
+```
+
+## Spending Calculations
+
+### Monthly Cost Calculation
+
+The chart shows monthly costs, automatically adjusting yearly subscriptions:
+
+```tsx
+// components/subscription/chart-dialog.tsx:177
+const data = useMemo(
+    () =>
+        subscription.map((item) => {
+            let displayPrice = item.convertedPrice;
+
+            // Amortize yearly subscriptions to monthly
+            if (
+                item.paymentCycle === "yearly" &&
+                !notAmortizeYearlySubscriptions
+            ) {
+                displayPrice = displayPrice / 12;
+            }
+
+            const monthlyPrice = Math.round(displayPrice);
+            const percentage = ((monthlyPrice / monthSpend) * 100).toFixed(1);
+
+            return {
+                name: item.name,
+                value: monthlyPrice,
+                percentage,
+                // ...
+            };
+        }),
+    [subscription, monthSpend, notAmortizeYearlySubscriptions],
+);
+```
+
+<Note>
+By default, yearly subscriptions are divided by 12 to show their monthly impact. This can be disabled in user preferences.
+</Note>
+
+### Total Spend Calculation
+
+Lifetime spending is calculated from the start date:
+
+```tsx
+// components/subscription/chart-dialog.tsx:48
+const calculateMonthsFromStart = (startDate: {
+    year: number;
+    month: number;
+    date: number;
+}) => {
+    const now = new Date();
+    const monthDiff =
+        (now.getFullYear() - startDate.year) * 12 +
+        (now.getMonth() + 1 - startDate.month);
+    return Math.max(1, monthDiff); // Minimum 1 month
+};
+
+// Then multiply by monthly cost
+const monthsFromStart = calculateMonthsFromStart(item.startDate);
+const totalSpend = monthlyPrice * monthsFromStart;
+```
+
+<Warning>
+Total spend assumes consistent monthly payments. Price changes during the subscription lifetime are not reflected.
+</Warning>
+
+## Sorting and Organization
+
+Subscriptions are automatically sorted by percentage:
+
+```tsx
+// components/subscription/chart-dialog.tsx:208
+const sortedData = useMemo(
+    () =>
+        [...data].sort(
+            (a, b) => Number(b.percentage) - Number(a.percentage),
+        ),
+    [data],
+);
+```
+
+This ensures:
+- Largest expenses appear first
+- Easy identification of top spending categories
+- Consistent ordering for comparison
+
+## User Preferences
+
+### Yearly Subscription Amortization
+
+Users can choose how yearly subscriptions are displayed:
+
+```tsx
+// components/subscription/chart-dialog.tsx:161
+const { notAmortizeYearlySubscriptions } = usePreferences();
+
+if (item.paymentCycle === "yearly" && !notAmortizeYearlySubscriptions) {
+    displayPrice = displayPrice / 12; // Show monthly equivalent
+}
+```
+
+<Tabs>
+  <Tab title="Amortized (Default)">
+    **Effect**: Yearly subscriptions divided by 12
+    
+    **Use case**: Understanding monthly budget impact
+    
+    **Example**: $120/year → $10/month in chart
+  </Tab>
+
+  <Tab title="Not Amortized">
+    **Effect**: Yearly subscriptions shown as full annual cost
+    
+    **Use case**: Seeing actual yearly charges
+    
+    **Example**: $120/year → $120 in chart (skews monthly view)
+  </Tab>
+</Tabs>
+
+<Note>
+When amortization is disabled, a note appears explaining that yearly subscriptions are shown as annual costs.
+</Note>
+
+## Responsive Layout
+
+The analytics dialog adapts to screen size:
+
+### Desktop Layout
+
+```tsx
+// components/subscription/chart-dialog.tsx:228
+<div className="flex items-center">
+    {/* Chart on left */}
+    <div style={{ height: "600px", width: "600px" }}>
+        <ResponsiveContainer>
+            <PieChart>{/* ... */}</PieChart>
+        </ResponsiveContainer>
+    </div>
+    
+    {/* List on right */}
+    <div className="h-[600px] w-[300px] overflow-y-auto">
+        {sortedData.map((item, index) => (
+            <SubscriptionListItem key={index} item={item} />
+        ))}
+    </div>
+</div>
+```
+
+### Mobile Layout
+
+```tsx
+// components/subscription/chart-dialog.tsx:228
+<div className="flex flex-col">
+    {/* Chart on top - full width */}
+    <div style={{ height: `${screenWidth}px`, width: `${screenWidth}px` }}>
+        <ResponsiveContainer>
+            <PieChart>{/* ... */}</PieChart>
+        </ResponsiveContainer>
+    </div>
+    
+    {/* List below - scrollable */}
+    <div className="w-full overflow-y-auto">
+        {sortedData.map((item, index) => (
+            <SubscriptionListItem key={index} item={item} />
+        ))}
+    </div>
+</div>
+```
+
+## Chart Animation
+
+Smooth animations enhance the experience:
+
+```tsx
+// components/subscription/chart-dialog.tsx:272
+<Pie
+    animationBegin={0}
+    animationDuration={1000}
+    animationEasing="ease-out"
+    // ...
+/>
+```
+
+<Tip>
+The chart animates in over 1 second when first opened, making it easy to see the distribution form.
+</Tip>
+
+## Empty State
+
+When no subscriptions exist:
+
+```tsx
+// components/subscription/chart-dialog.tsx:247
+data={data.length > 0 ? data : [{ name: "", value: 1, percentage: "100.0" }]}
+
+{sortedData.length === 0 && (
+    <text x="50%" y="62%" textAnchor="middle">
+        {t("noSubscription")}
+    </text>
+)}
+```
+
+This shows:
+- A neutral gray donut
+- "No subscriptions" message
+- Encouragement to add subscriptions
+
+## Use Cases
+
+<CardGroup cols={2}>
+  <Card title="Budget Analysis" icon="magnifying-glass-chart">
+    Identify which subscriptions consume the most of your budget.
+  </Card>
+
+  <Card title="Cost Optimization" icon="scissors">
+    Find opportunities to reduce spending by canceling or downgrading high-cost services.
+  </Card>
+
+  <Card title="Spending Trends" icon="chart-line">
+    Track how your subscription costs evolve over time.
+  </Card>
+
+  <Card title="Financial Planning" icon="piggy-bank">
+    Calculate total annual subscription costs for budgeting purposes.
+  </Card>
+</CardGroup>
+
+## Currency Conversion
+
+Analytics automatically convert multi-currency subscriptions:
+
+```typescript
+// Subscriptions stored in original currency
+const subscription = {
+    price: 9.99,
+    currency: "EUR"
+};
+
+// Converted to user's preferred currency
+const convertedPrice = subscription.price * exchangeRate;
+
+// Displayed in analytics
+const data = {
+    value: Math.round(convertedPrice),
+    currency: "USD" // User's preferred currency
+};
+```
+
+<Note>
+All subscriptions are converted to your preferred currency using current exchange rates for accurate comparison.
+</Note>
+
+## Best Practices
+
+### Regular Reviews
+
+<Tip>
+Check your analytics monthly to stay aware of spending patterns and identify subscriptions you no longer use.
+</Tip>
+
+### Accurate Start Dates
+
+<Warning>
+Total spend calculations depend on accurate start dates. Review and update start dates if you migrated from another tracking system.
+</Warning>
+
+### Consider Yearly Subscriptions
+
+When analyzing costs:
+- Enable amortization to see monthly budget impact
+- Disable amortization to see actual yearly charges
+- Compare both views for complete understanding
+
+### Share Insights
+
+Use analytics to:
+- Justify cost-sharing with family members
+- Demonstrate savings from yearly vs. monthly plans
+- Make informed decisions about subscription bundles
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Subscription Management" icon="list-check" href="/features/subscription-management">
+    Update subscriptions based on analytics insights
+  </Card>
+
+  <Card title="Calendar Tracking" icon="calendar" href="/features/calendar-tracking">
+    View payment schedules on calendar
+  </Card>
+
+  <Card title="Smart Add" icon="brain" href="/features/smart-add">
+    Quickly add new subscriptions with AI
+  </Card>
+</CardGroup>

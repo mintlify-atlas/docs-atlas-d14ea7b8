@@ -1,0 +1,498 @@
+---
+title: Database Setup
+description: MongoDB configuration and schema details for Subflow
+---
+
+## Overview
+
+Subflow uses MongoDB as its database to store user subscriptions, preferences, and email settings. The application automatically creates the required database and collections on first connection.
+
+## MongoDB Requirements
+
+<CardGroup cols={2}>
+  <Card title="Version" icon="tag">
+    MongoDB 5.0 or higher
+  </Card>
+  <Card title="Storage" icon="hard-drive">
+    Minimum 512MB for small instances
+  </Card>
+  <Card title="Connection" icon="network-wired">
+    Stable network connection
+  </Card>
+  <Card title="Authentication" icon="lock">
+    User with read/write permissions
+  </Card>
+</CardGroup>
+
+## Database Options
+
+### Option 1: MongoDB Atlas (Recommended)
+
+MongoDB Atlas is a fully managed cloud database service with a generous free tier.
+
+<Steps>
+  <Step title="Create Account">
+    Sign up at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas/register)
+  </Step>
+  
+  <Step title="Create Cluster">
+    1. Click **Build a Database**
+    2. Choose **M0 Cluster** (free tier)
+    3. Select a cloud provider and region
+    4. Click **Create Cluster**
+  </Step>
+  
+  <Step title="Configure Database Access">
+    1. Go to **Database Access** in the left sidebar
+    2. Click **Add New Database User**
+    3. Choose **Password** authentication
+    4. Create a username and strong password
+    5. Set **Built-in Role** to **Read and write to any database**
+    6. Click **Add User**
+  </Step>
+  
+  <Step title="Configure Network Access">
+    1. Go to **Network Access** in the left sidebar
+    2. Click **Add IP Address**
+    3. For development: Click **Allow Access from Anywhere** (0.0.0.0/0)
+    4. For production: Add your server's IP address
+    5. Click **Confirm**
+    
+    <Warning>
+      For production, restrict access to specific IP addresses rather than allowing all IPs.
+    </Warning>
+  </Step>
+  
+  <Step title="Get Connection String">
+    1. Go to **Database** and click **Connect**
+    2. Choose **Connect your application**
+    3. Select **Driver: Node.js** and **Version: 5.5 or later**
+    4. Copy the connection string
+    5. Replace `<password>` with your database user's password
+    
+    ```bash
+    MONGODB_URI=mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
+    ```
+  </Step>
+</Steps>
+
+### Option 2: Self-Hosted MongoDB
+
+For self-hosting MongoDB on your own server:
+
+<Tabs>
+  <Tab title="Docker">
+    Run MongoDB using Docker:
+    
+    ```bash
+    docker run -d \
+      --name mongodb \
+      -p 27017:27017 \
+      -e MONGO_INITDB_ROOT_USERNAME=admin \
+      -e MONGO_INITDB_ROOT_PASSWORD=password \
+      -v mongodb_data:/data/db \
+      mongo:7
+    ```
+    
+    Connection string:
+    ```bash
+    MONGODB_URI=mongodb://admin:password@localhost:27017/admin
+    ```
+  </Tab>
+  
+  <Tab title="Ubuntu/Debian">
+    Install MongoDB on Ubuntu/Debian:
+    
+    ```bash
+    # Import MongoDB public GPG key
+    wget -qO - https://www.mongodb.org/static/pgp/server-7.0.asc | sudo apt-key add -
+    
+    # Add MongoDB repository
+    echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+    
+    # Install MongoDB
+    sudo apt-get update
+    sudo apt-get install -y mongodb-org
+    
+    # Start MongoDB
+    sudo systemctl start mongod
+    sudo systemctl enable mongod
+    ```
+    
+    Connection string:
+    ```bash
+    MONGODB_URI=mongodb://localhost:27017
+    ```
+  </Tab>
+  
+  <Tab title="macOS">
+    Install MongoDB using Homebrew:
+    
+    ```bash
+    # Install MongoDB
+    brew tap mongodb/brew
+    brew install mongodb-community@7.0
+    
+    # Start MongoDB
+    brew services start mongodb-community@7.0
+    ```
+    
+    Connection string:
+    ```bash
+    MONGODB_URI=mongodb://localhost:27017
+    ```
+  </Tab>
+</Tabs>
+
+### Option 3: Other MongoDB Services
+
+Subflow works with any MongoDB-compatible service:
+
+- **DigitalOcean Managed MongoDB**: Fully managed database service
+- **AWS DocumentDB**: Amazon's MongoDB-compatible service
+- **Azure Cosmos DB**: MongoDB API compatibility
+- **Railway**: Managed MongoDB with simple deployment
+
+## Database Schema
+
+Subflow automatically creates a database named `subflow` with three collections:
+
+### Collections Overview
+
+<AccordionGroup>
+  <Accordion title="subscriptions - User Subscription Data">
+    Stores all subscription information for users.
+    
+    **Schema:**
+    ```typescript
+    {
+      userId: string;              // Clerk user ID
+      name: string;                // Subscription name
+      price: number;               // Subscription price
+      currency: string;            // Currency code (USD, EUR, etc.)
+      startDate: {
+        year: number;
+        month: number;
+        date: number;
+      };
+      paymentCycle: string;        // monthly, yearly, weekly, etc.
+      serviceId?: string;          // Optional service identifier
+      coSubscribers?: [            // Optional co-subscriber info
+        {
+          email: string;
+          confirm: boolean;
+          amount: number;
+          currency: string;
+        }
+      ];
+      createdAt: Date;             // Auto-generated
+      updatedAt: Date;             // Auto-generated
+    }
+    ```
+    
+    **Indexes:**
+    - `userId`: For fast user subscription lookups
+  </Accordion>
+  
+  <Accordion title="preferences - User Preferences">
+    Stores user-specific preferences and settings.
+    
+    **Schema:**
+    ```typescript
+    {
+      userId: string;                          // Clerk user ID (unique)
+      notAmortizeYearlySubscriptions: boolean; // Display preference
+      createdAt: Date;                         // Auto-generated
+      updatedAt: Date;                         // Auto-generated
+    }
+    ```
+    
+    **Indexes:**
+    - `userId` (unique): Ensures one preference document per user
+  </Accordion>
+  
+  <Accordion title="emails - Email Notification Settings">
+    Stores email addresses and notification preferences.
+    
+    **Schema:**
+    ```typescript
+    {
+      userId: string;              // Clerk user ID (unique)
+      email: string;               // User's email address
+      language: string;            // Preferred language (en, zh, ja, es)
+      notify: boolean;             // Email notifications enabled
+      createdAt: Date;             // Auto-generated
+      updatedAt: Date;             // Auto-generated
+    }
+    ```
+    
+    **Indexes:**
+    - `userId` (unique): Ensures one email document per user
+  </Accordion>
+</AccordionGroup>
+
+## Connection Configuration
+
+### Basic Connection
+
+The application connects to MongoDB using Mongoose in `/lib/mongodb.ts:3-9`:
+
+```typescript
+import mongoose from "mongoose";
+
+let db: mongoose.Connection | null = null;
+
+export const connectToDatabase = async (): Promise<mongoose.Connection> => {
+    if (!db || mongoose.connection.readyState === 0) {
+        await mongoose.connect(process.env.MONGODB_URI as string);
+        db = mongoose.connection.useDb("subflow");
+    }
+    return db;
+};
+```
+
+### Connection String Options
+
+<ParamField path="retryWrites" type="boolean" default="true">
+  Automatically retry write operations on failure.
+  
+  ```bash
+  MONGODB_URI=mongodb+srv://.../?retryWrites=true
+  ```
+</ParamField>
+
+<ParamField path="w" type="string" default="majority">
+  Write concern level. `majority` ensures data is written to majority of nodes.
+  
+  ```bash
+  MONGODB_URI=mongodb+srv://.../?w=majority
+  ```
+</ParamField>
+
+<ParamField path="maxPoolSize" type="number" default="10">
+  Maximum number of connections in the connection pool.
+  
+  ```bash
+  MONGODB_URI=mongodb+srv://.../?maxPoolSize=20
+  ```
+</ParamField>
+
+<ParamField path="minPoolSize" type="number" default="0">
+  Minimum number of connections in the connection pool.
+  
+  ```bash
+  MONGODB_URI=mongodb+srv://.../?minPoolSize=5
+  ```
+</ParamField>
+
+### Example Connection Strings
+
+<Tabs>
+  <Tab title="MongoDB Atlas">
+    ```bash
+    MONGODB_URI=mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority&maxPoolSize=20
+    ```
+  </Tab>
+  
+  <Tab title="Local MongoDB">
+    ```bash
+    MONGODB_URI=mongodb://localhost:27017
+    ```
+  </Tab>
+  
+  <Tab title="With Authentication">
+    ```bash
+    MONGODB_URI=mongodb://username:password@localhost:27017/admin
+    ```
+  </Tab>
+  
+  <Tab title="Replica Set">
+    ```bash
+    MONGODB_URI=mongodb://host1:27017,host2:27017,host3:27017/?replicaSet=myReplicaSet
+    ```
+  </Tab>
+</Tabs>
+
+## Database Initialization
+
+Subflow automatically handles database initialization:
+
+1. **On first connection**: Creates the `subflow` database if it doesn't exist
+2. **On first model use**: Creates collections with proper schemas
+3. **Indexes**: Automatically created based on schema definitions
+4. **No manual setup**: No SQL scripts or migrations needed
+
+## Data Management
+
+### Backup Strategies
+
+<Tabs>
+  <Tab title="MongoDB Atlas">
+    Atlas provides automatic backups:
+    1. Go to your cluster
+    2. Click **Backup** tab
+    3. Configure backup schedule
+    4. Backups are retained based on your plan
+  </Tab>
+  
+  <Tab title="Manual Backup">
+    Use `mongodump` to create backups:
+    
+    ```bash
+    # Backup entire database
+    mongodump --uri="mongodb://localhost:27017" --db=subflow --out=/backup/
+    
+    # Restore from backup
+    mongorestore --uri="mongodb://localhost:27017" --db=subflow /backup/subflow/
+    ```
+  </Tab>
+  
+  <Tab title="Automated Script">
+    Create a backup script:
+    
+    ```bash
+    #!/bin/bash
+    DATE=$(date +%Y%m%d_%H%M%S)
+    BACKUP_DIR="/backup/mongodb/$DATE"
+    
+    mongodump --uri="$MONGODB_URI" --db=subflow --out="$BACKUP_DIR"
+    
+    # Compress backup
+    tar -czf "$BACKUP_DIR.tar.gz" "$BACKUP_DIR"
+    rm -rf "$BACKUP_DIR"
+    
+    # Keep only last 7 days
+    find /backup/mongodb -name "*.tar.gz" -mtime +7 -delete
+    ```
+    
+    Schedule with cron:
+    ```bash
+    # Run daily at 2 AM
+    0 2 * * * /path/to/backup-script.sh
+    ```
+  </Tab>
+</Tabs>
+
+### Data Retention
+
+Subflow automatically handles data cleanup:
+
+- **User deletion**: When a user deletes their account via Clerk, the webhook at `/app/api/webhooks/route.ts:7-35` automatically removes:
+  - All user subscriptions
+  - User email settings
+  - User preferences
+
+<Info>
+  User data is only deleted when explicitly requested through Clerk's user deletion flow.
+</Info>
+
+## Security Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="lock">
+    Always use authentication for MongoDB:
+    - Create dedicated database users
+    - Use strong, unique passwords
+    - Never use default credentials
+  </Card>
+  
+  <Card title="Network Security" icon="shield">
+    Restrict network access:
+    - Use IP whitelisting
+    - Enable SSL/TLS connections
+    - Use VPCs in production
+  </Card>
+  
+  <Card title="Encryption" icon="key">
+    Protect data at rest and in transit:
+    - Enable encryption at rest
+    - Use TLS for connections
+    - Consider field-level encryption
+  </Card>
+  
+  <Card title="Monitoring" icon="chart-line">
+    Monitor database health:
+    - Set up performance alerts
+    - Monitor connection counts
+    - Track slow queries
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+### Connection Issues
+
+<AccordionGroup>
+  <Accordion title="Connection Timeout">
+    **Symptoms**: Application fails to connect to MongoDB
+    
+    **Solutions**:
+    - Verify MongoDB URI is correct
+    - Check network connectivity
+    - Ensure IP address is whitelisted (for Atlas)
+    - Verify MongoDB service is running
+    - Check firewall rules
+  </Accordion>
+  
+  <Accordion title="Authentication Failed">
+    **Symptoms**: "Authentication failed" error
+    
+    **Solutions**:
+    - Verify username and password are correct
+    - Ensure user has proper permissions
+    - Check if special characters in password are URL-encoded
+    - Confirm database user exists
+  </Accordion>
+  
+  <Accordion title="Too Many Connections">
+    **Symptoms**: "Too many connections" error
+    
+    **Solutions**:
+    - Reduce `maxPoolSize` in connection string
+    - Check for connection leaks in your code
+    - Increase connection limit (for self-hosted)
+    - Upgrade MongoDB plan (for Atlas)
+  </Accordion>
+  
+  <Accordion title="Slow Queries">
+    **Symptoms**: Application is slow, database operations timeout
+    
+    **Solutions**:
+    - Check MongoDB indexes are created
+    - Monitor database performance metrics
+    - Optimize queries with large datasets
+    - Consider upgrading database resources
+  </Accordion>
+</AccordionGroup>
+
+## Migration
+
+If you need to migrate from another database or move between MongoDB instances:
+
+<Steps>
+  <Step title="Export Data">
+    Export from source database:
+    ```bash
+    mongodump --uri="SOURCE_MONGODB_URI" --db=subflow --out=/export/
+    ```
+  </Step>
+  
+  <Step title="Import Data">
+    Import to target database:
+    ```bash
+    mongorestore --uri="TARGET_MONGODB_URI" --db=subflow /export/subflow/
+    ```
+  </Step>
+  
+  <Step title="Update Configuration">
+    Update `MONGODB_URI` in your environment variables to point to the new database.
+  </Step>
+  
+  <Step title="Verify">
+    Test the application to ensure all data is accessible and functionality works correctly.
+  </Step>
+</Steps>
+
+<Warning>
+  Always test migrations in a staging environment before applying to production.
+</Warning>

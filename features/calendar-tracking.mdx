@@ -1,0 +1,355 @@
+---
+title: 'Calendar Tracking'
+description: 'Visualize subscription payment cycles with calendar view'
+---
+
+## Overview
+
+Subflow's calendar tracking feature provides a visual representation of your subscription payment schedule. See all your upcoming payments at a glance, organized by date, with interactive hover cards and mobile-friendly drawers.
+
+## Calendar View
+
+The calendar displays your subscriptions based on their start date and payment cycle:
+
+- **Monthly subscriptions** appear on the same date every month
+- **Yearly subscriptions** appear once per year on the anniversary
+- **Multiple subscriptions** on the same day are stacked with indicators
+
+### Visual Indicators
+
+<Tabs>
+  <Tab title="Current Month Days">
+    Days in the current month have a dark background with light text, making it easy to focus on relevant dates.
+    
+    ```tsx
+    // components/subscription/calendar-cell.tsx:48
+    const cellStyles = day.isCurrentMonth
+        ? "bg-subflow-800 text-subflow-50" // Current month
+        : "bg-subflow-100 text-subflow-800"; // Other months
+    ```
+  </Tab>
+
+  <Tab title="Service Icons">
+    Each subscription is represented by its service icon (Netflix, Spotify, etc.) or the first letter of custom services.
+    
+    ```tsx
+    // components/subscription/calendar-cell.tsx:56
+    const Icon = subscriptionServices.find(
+        (service) => service.uuid === subscription.serviceId,
+    )?.icon;
+
+    return Icon ? (
+        <Icon className="h-3 w-3 sm:h-4 sm:w-4" />
+    ) : (
+        <span className="text-subflow-50 text-xs font-bold">
+            {subscription.name.charAt(0).toUpperCase()}
+        </span>
+    );
+    ```
+  </Tab>
+
+  <Tab title="Overflow Indicator">
+    When more than 2 subscriptions fall on the same day, a "+N" indicator shows how many more exist.
+    
+    ```tsx
+    // components/subscription/calendar-cell.tsx:101
+    {subscription
+        ?.slice(0, 2) // Show first 2 icons
+        .map((sub, index) => renderSubscriptionIcon(sub, index))}
+    {subscription && subscription.length > 2 && 
+        renderRemainingCount(subscription.length - 2) // Show "+2", "+3", etc.
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Interactive Features
+
+### Desktop: Hover Cards
+
+On desktop, hovering over a calendar date with subscriptions reveals a hover card showing:
+
+- All subscriptions due that day
+- Service names and icons
+- Quick actions (edit, delete)
+
+```tsx
+// components/subscription/calendar-cell.tsx:146
+<HoverCard openDelay={150} closeDelay={50}>
+    <HoverCardTrigger asChild>{cellContent}</HoverCardTrigger>
+    <HoverCardContent className="w-fit min-w-56 overflow-hidden rounded-2xl">
+        <div className="custom-scrollbar max-h-66 overflow-y-auto">
+            {subscription.map((sub, index) => (
+                <SubscriptionListItem
+                    subscription={sub}
+                    onSuccess={() => setUpdatedSubscription(!updatedSubscription)}
+                />
+            ))}
+        </div>
+    </HoverCardContent>
+</HoverCard>
+```
+
+<Note>
+Hover cards have a 150ms open delay to prevent accidental triggers while moving your mouse across the calendar.
+</Note>
+
+### Mobile: Swipe Drawers
+
+On mobile devices, tapping a calendar date opens a bottom drawer with the same information:
+
+```tsx
+// components/subscription/calendar-cell.tsx:114
+<Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+    <DrawerTrigger asChild>
+        <div onClick={() => setDrawerOpen((prev) => !prev)}>
+            {cellContent}
+        </div>
+    </DrawerTrigger>
+    <DrawerContent className="max-h-[60vh] overflow-y-auto">
+        {subscription.map((sub, index) => (
+            <SubscriptionListItem
+                subscription={sub}
+                onSuccess={() => {
+                    setUpdatedSubscription(!updatedSubscription);
+                    setDrawerOpen(false);
+                }}
+            />
+        ))}
+    </DrawerContent>
+</Drawer>
+```
+
+<Tip>
+The drawer automatically closes after editing or deleting a subscription for a seamless experience.
+</Tip>
+
+## Calendar Data Structure
+
+The calendar is built from a simple data model:
+
+```typescript
+// types/calendar.ts
+export interface Calendar {
+    date: string;        // ISO format: "2024-01-15"
+    weekday: number;     // 0-6 (Sunday to Saturday)
+    isCurrentMonth: boolean;
+}
+```
+
+### Building the Calendar
+
+The calendar component maps subscriptions to dates based on their payment cycle:
+
+```typescript
+// Example: Calculating payment dates
+function getPaymentDates(subscription: Subscription, month: number, year: number) {
+    const { startDate, paymentCycle } = subscription;
+    
+    if (paymentCycle === "monthly") {
+        // Appears on same date every month
+        return [new Date(year, month, startDate.date)];
+    } else if (paymentCycle === "yearly") {
+        // Only appears in anniversary month
+        if (month === startDate.month - 1) {
+            return [new Date(year, month, startDate.date)];
+        }
+        return [];
+    }
+}
+```
+
+## Payment Cycle Tracking
+
+### Monthly Subscriptions
+
+<Steps>
+  <Step title="Start Date">
+    The subscription appears on the same date each month based on the start date.
+    
+    Example: Start date of January 15 → appears on 15th of every month
+  </Step>
+
+  <Step title="Month Edge Cases">
+    For dates that don't exist in all months (e.g., 31st), the subscription appears on the last day of shorter months.
+  </Step>
+
+  <Step title="Recurring Display">
+    The subscription icon appears every month indefinitely until deleted.
+  </Step>
+</Steps>
+
+### Yearly Subscriptions
+
+<Steps>
+  <Step title="Anniversary Date">
+    The subscription appears once per year on the exact anniversary of the start date.
+    
+    Example: Start date of June 10, 2024 → appears only on June 10 each year
+  </Step>
+
+  <Step title="Annual Reminder">
+    Only the anniversary month shows the subscription in the calendar.
+  </Step>
+</Steps>
+
+## Responsive Design
+
+The calendar adapts to different screen sizes:
+
+```tsx
+// components/subscription/calendar-cell.tsx:34
+const CELL_BASE_STYLES = 
+    "col-span-1 h-12 w-12 sm:h-18 sm:w-18 md:h-20 md:w-20 
+     rounded-lg sm:rounded-xl md:rounded-2xl";
+
+const SUBSCRIPTION_ICON_BASE_STYLES = 
+    "h-5 sm:h-7 w-5 sm:w-7 items-center justify-center 
+     rounded-sm sm:rounded-md border-2";
+```
+
+<Tabs>
+  <Tab title="Mobile (< 640px)">
+    - Smaller calendar cells (h-12, w-12)
+    - Compact icons (h-5, w-5)
+    - Drawer interaction instead of hover
+    - Touch-optimized spacing
+  </Tab>
+
+  <Tab title="Tablet (640px - 768px)">
+    - Medium cells (h-18, w-18)
+    - Standard icons (h-7, w-7)
+    - Hover cards available
+    - Increased padding
+  </Tab>
+
+  <Tab title="Desktop (> 768px)">
+    - Large cells (h-20, w-20)
+    - Full-size icons
+    - Rich hover interactions
+    - Maximum detail visibility
+  </Tab>
+</Tabs>
+
+## Animations
+
+Smooth transitions enhance the user experience:
+
+```tsx
+// components/subscription/calendar-cell.tsx:61
+<motion.div
+    className={SUBSCRIPTION_ICON_BASE_STYLES}
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.2, ease: "easeInOut" }}
+>
+    {Icon && <Icon className="h-3 w-3 sm:h-4 sm:w-4" />}
+</motion.div>
+```
+
+<Note>
+Icons fade in from below when subscriptions are added or updated, providing visual feedback.
+</Note>
+
+## Integration with Subscription Management
+
+The calendar automatically updates when subscriptions change:
+
+```tsx
+// components/subscription/calendar-cell.tsx:26
+interface CalendarCellProps {
+    day: Calendar;
+    subscription?: Subscription[];
+    currenciesList: CurrenciesList;
+    updatedSubscription: boolean;         // Triggers re-render
+    setUpdatedSubscription: (updated: boolean) => void;
+}
+
+// After editing a subscription
+<SubscriptionListItem
+    subscription={sub}
+    onSuccess={() => setUpdatedSubscription(!updatedSubscription)}
+/>
+```
+
+## Use Cases
+
+<CardGroup cols={2}>
+  <Card title="Budget Planning" icon="calendar-days">
+    Preview upcoming charges to plan your monthly budget around subscription renewals.
+  </Card>
+
+  <Card title="Payment Tracking" icon="credit-card">
+    Identify days with multiple charges to ensure sufficient account balance.
+  </Card>
+
+  <Card title="Subscription Audits" icon="magnifying-glass">
+    Quickly spot forgotten subscriptions by scanning the calendar visually.
+  </Card>
+
+  <Card title="Cancellation Timing" icon="ban">
+    Time cancellations strategically by seeing renewal dates in advance.
+  </Card>
+</CardGroup>
+
+## Best Practices
+
+### Accurate Start Dates
+
+Ensure subscription start dates match your actual billing dates:
+
+<Warning>
+If your Netflix subscription bills on the 15th but you enter the 10th, the calendar will show incorrect payment dates throughout the year.
+</Warning>
+
+### Regular Calendar Checks
+
+<Tip>
+Review your calendar weekly to stay aware of upcoming charges and avoid overdraft fees.
+</Tip>
+
+### Co-Subscription Visibility
+
+Shared subscriptions appear in all co-subscribers' calendars:
+
+```typescript
+// Subscriptions appear for both owner and confirmed co-subscribers
+const subscriptions = await Subscription.find({
+    $or: [
+        { userId },
+        {
+            coSubscribers: {
+                $elemMatch: {
+                    email: userEmail,
+                    confirm: true, // Only confirmed co-subscribers see it
+                },
+            },
+        },
+    ],
+});
+```
+
+## Performance Optimization
+
+The calendar efficiently handles many subscriptions:
+
+- **Lazy rendering**: Only visible month cells are fully rendered
+- **Icon caching**: Service icons are loaded once and reused
+- **Hover delay**: 150ms delay prevents unnecessary renders from mouse movement
+- **Subscription grouping**: Subscriptions are pre-grouped by date before rendering
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Subscription Management" icon="list" href="/features/subscription-management">
+    Learn how to add and edit subscriptions
+  </Card>
+
+  <Card title="Analytics" icon="chart-bar" href="/features/analytics">
+    View spending trends and patterns
+  </Card>
+
+  <Card title="Smart Add" icon="wand-magic-sparkles" href="/features/smart-add">
+    Auto-detect subscriptions from receipts
+  </Card>
+</CardGroup>

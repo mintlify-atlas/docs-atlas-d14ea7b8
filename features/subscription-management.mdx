@@ -1,0 +1,366 @@
+---
+title: 'Subscription Management'
+description: 'Add, edit, delete, and organize your subscriptions in Subflow'
+---
+
+## Overview
+
+Subflow provides comprehensive subscription management capabilities, allowing you to track all your recurring payments in one place. You can manually add subscriptions, edit their details, organize co-subscribers, and delete subscriptions when needed.
+
+## Adding a Subscription
+
+There are two ways to add subscriptions to Subflow:
+
+1. **Manual Add** - Enter subscription details manually
+2. **Smart Add** - Use AI to detect subscription info from receipts (see [Smart Add](/features/smart-add))
+
+### Manual Add Process
+
+<Steps>
+  <Step title="Open Add Dialog">
+    Click the "Manual Add" button with the plus icon on your dashboard. This opens the subscription form dialog.
+  </Step>
+
+  <Step title="Select Service">
+    Choose from pre-configured services or enter a custom service name:
+    - Use the services combobox to search for popular services (Netflix, Spotify, etc.)
+    - Each service has a recognizable icon for easy identification
+    - If your service isn't listed, simply type a custom name
+  </Step>
+
+  <Step title="Enter Price Details">
+    Specify the subscription cost:
+    - Enter the price (must be greater than 0)
+    - Select the currency from supported options (USD, EUR, JPY, etc.)
+  </Step>
+
+  <Step title="Set Start Date">
+    Choose when your subscription began:
+    - Use the date picker to select year, month, and day
+    - This determines when payments are tracked from
+  </Step>
+
+  <Step title="Choose Payment Cycle">
+    Select how often you're billed:
+    - **Monthly** - Charged every month
+    - **Yearly** - Charged once per year
+  </Step>
+
+  <Step title="Add Co-Subscribers (Optional)">
+    If you share this subscription with others, click "Manage Co-Subscribers":
+    - Enter each person's email address (must be registered in Subflow)
+    - Specify the amount they contribute
+    - Choose their contribution currency
+    - Co-subscribers will receive an invite to confirm
+    
+    See [Co-Subscription Sharing](#co-subscription-sharing) for more details.
+  </Step>
+
+  <Step title="Submit">
+    Click "Add" to create your subscription. You'll see a success message when it's saved.
+  </Step>
+</Steps>
+
+### Code Reference
+
+The subscription creation process is handled by the `addSubscription` function:
+
+```typescript
+// app/actions/action.ts
+export async function addSubscription(subscriptionData: Subscription) {
+    const userId = await requireAuth();
+    const db = await connectToDatabase();
+    const Subscription = getSubscriptionModel(db);
+
+    const subscription = new Subscription({
+        ...subscriptionData,
+        userId: userId,
+        coSubscribers: subscriptionData.coSubscribers || [],
+    });
+
+    await subscription.save();
+    return { message: "Subscription added" };
+}
+```
+
+## Editing a Subscription
+
+You can update any aspect of a subscription after creation.
+
+<Steps>
+  <Step title="Open Edit Dialog">
+    Click the pencil icon next to any subscription to open the update dialog.
+  </Step>
+
+  <Step title="Modify Details">
+    Update any of the following:
+    - Service name
+    - Price and currency
+    - Start date
+    - Payment cycle (monthly/yearly)
+    - Co-subscribers
+  </Step>
+
+  <Step title="Save Changes">
+    Click "Update" to save your changes. The subscription will be updated immediately.
+  </Step>
+</Steps>
+
+<Note>
+When editing co-subscribers, existing invitations retain their confirmation status. Only newly added co-subscribers will need to confirm.
+</Note>
+
+### Update Implementation
+
+The update process preserves important metadata:
+
+```typescript
+// app/actions/action.ts:82
+export async function updateSubscription(
+    subscriptionId: string,
+    subscriptionData: Subscription,
+) {
+    const userId = await requireAuth();
+    const db = await connectToDatabase();
+    const Subscription = getSubscriptionModel(db);
+
+    await Subscription.updateOne(
+        { _id: subscriptionId, userId: userId },
+        {
+            $set: {
+                ...subscriptionData,
+                userId: userId,
+                coSubscribers: subscriptionData.coSubscribers || [],
+            },
+        },
+    );
+
+    return { message: "Subscription updated successfully" };
+}
+```
+
+## Deleting a Subscription
+
+Remove subscriptions you no longer need.
+
+<Steps>
+  <Step title="Open Delete Dialog">
+    Click the trash icon next to the subscription you want to delete.
+  </Step>
+
+  <Step title="Confirm Deletion">
+    Review the confirmation message showing which subscription will be deleted.
+  </Step>
+
+  <Step title="Delete">
+    Click "Delete" to permanently remove the subscription. This action cannot be undone.
+  </Step>
+</Steps>
+
+<Warning>
+Deleting a subscription is permanent. All payment history and analytics data for this subscription will be removed.
+</Warning>
+
+### Deletion Code
+
+```typescript
+// app/actions/action.ts:115
+export async function deleteSubscription(subscriptionId: string) {
+    const userId = await requireAuth();
+    const db = await connectToDatabase();
+    const Subscription = getSubscriptionModel(db);
+
+    await Subscription.deleteOne({
+        _id: subscriptionId,
+        userId: userId,
+    });
+
+    return { message: "Subscription deleted successfully" };
+}
+```
+
+## Co-Subscription Sharing
+
+Share subscription costs with friends or family members.
+
+### How It Works
+
+1. **Add Co-Subscribers** - When creating or editing a subscription, add email addresses of people who share the cost
+2. **Specify Contributions** - Enter how much each person pays and in what currency
+3. **Send Invites** - Co-subscribers receive an invitation to confirm their participation
+4. **Track Shared Costs** - Once confirmed, shared subscriptions appear in both users' dashboards
+
+### Co-Subscriber Requirements
+
+<Note>
+- Email addresses must be registered Subflow users
+- Each co-subscriber must specify their contribution amount
+- Contributions can be in different currencies
+- Co-subscribers must confirm invites before subscriptions appear in their dashboard
+</Note>
+
+### Managing Co-Subscribers
+
+```tsx
+// Example: Adding a co-subscriber
+const coSubscriber = {
+    email: "friend@example.com",
+    amount: 5.99,
+    currency: "USD",
+    confirm: false // Will be set to true when they accept
+};
+```
+
+### Invitation Workflow
+
+<Steps>
+  <Step title="Receive Invite">
+    Co-subscribers see pending invitations in their account.
+  </Step>
+
+  <Step title="Review Details">
+    They can view the subscription name, total cost, and their share.
+  </Step>
+
+  <Step title="Accept or Reject">
+    - **Accept** - The subscription appears in their dashboard with "shared" status
+    - **Reject** - They're removed from the co-subscribers list
+  </Step>
+</Steps>
+
+### Confirmation and Rejection
+
+```typescript
+// app/actions/action.ts:172
+export async function confirmCoSubscriberInvite(
+    subscriptionId: string,
+    userEmail: string,
+) {
+    // Verify user email matches authenticated user
+    await Subscription.updateOne(
+        {
+            _id: subscriptionId,
+            "coSubscribers.email": userEmail,
+        },
+        {
+            $set: { "coSubscribers.$.confirm": true },
+        },
+    );
+}
+
+export async function rejectCoSubscriberInvite(
+    subscriptionId: string,
+    userEmail: string,
+) {
+    // Remove co-subscriber from the list
+    await Subscription.updateOne(
+        { _id: subscriptionId },
+        {
+            $pull: {
+                coSubscribers: { email: userEmail },
+            },
+        },
+    );
+}
+```
+
+## Subscription Data Model
+
+Understanding the subscription structure:
+
+```typescript
+export type Subscription = {
+    _id?: string;
+    userId: string;
+    name: string;
+    price: number;
+    currency: string;
+    startDate: {
+        year: number;
+        month: number;
+        date: number;
+    };
+    paymentCycle: "monthly" | "yearly";
+    serviceId?: string; // UUID of pre-configured service
+    coSubscribers?: CoSubscriber[];
+    isCoSubscription?: boolean; // True if user is a co-subscriber
+    createdAt?: Date;
+    updatedAt?: Date;
+};
+
+export type CoSubscriber = {
+    email: string;
+    confirm: boolean;
+    amount: number;
+    currency: string;
+};
+```
+
+## Retrieving Subscriptions
+
+Subscriptions are fetched with co-subscription support:
+
+```typescript
+// app/actions/action.ts:37
+export async function getSubscription() {
+    const userId = await requireAuth();
+    const userEmail = await getUserEmail(userId);
+
+    // Find subscriptions where user is owner OR confirmed co-subscriber
+    const subscriptions = await Subscription.find({
+        $or: [
+            { userId },
+            {
+                coSubscribers: {
+                    $elemMatch: {
+                        email: userEmail,
+                        confirm: true,
+                    },
+                },
+            },
+        ],
+    });
+
+    // Add identifier for co-subscriptions
+    return subscriptions.map((sub) => ({
+        ...sub.toObject(),
+        isCoSubscription: sub.userId !== userId,
+    }));
+}
+```
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Regular Updates" icon="calendar-check">
+    Keep subscription details current, especially when prices change or payment cycles are modified.
+  </Card>
+
+  <Card title="Accurate Start Dates" icon="clock">
+    Use the actual start date for accurate total spend calculations in analytics.
+  </Card>
+
+  <Card title="Currency Consistency" icon="dollar-sign">
+    Use the original currency of the subscription for accurate tracking and conversion.
+  </Card>
+
+  <Card title="Co-Subscriber Communication" icon="users">
+    Confirm cost-sharing arrangements before adding co-subscribers to avoid confusion.
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Calendar Tracking" icon="calendar" href="/features/calendar-tracking">
+    View payment schedules on a calendar interface
+  </Card>
+
+  <Card title="Analytics" icon="chart-line" href="/features/analytics">
+    Analyze spending patterns and subscription costs
+  </Card>
+
+  <Card title="Smart Add" icon="sparkles" href="/features/smart-add">
+    Use AI to detect subscriptions from receipts
+  </Card>
+</CardGroup>

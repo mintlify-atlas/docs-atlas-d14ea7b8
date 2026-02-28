@@ -1,0 +1,312 @@
+---
+title: Co-Subscribers
+description: Share subscription costs with family and friends by adding co-subscribers to your subscriptions
+---
+
+Co-subscribers let you share your subscriptions with family and friends, making it easy to split costs and manage shared subscription expenses together.
+
+## What are Co-Subscribers?
+
+The co-subscriber feature allows you to:
+
+- **Invite others** to share a subscription with you
+- **Split costs** by assigning specific amounts to each person
+- **Track shared subscriptions** separately from your personal ones
+- **Manage invitations** through a confirmation system
+
+## How Co-Subscribers Work
+
+### The Invitation Flow
+
+1. **Owner adds co-subscribers**: You add someone's email to a subscription with their share amount
+2. **System validates**: Subflow checks if the email is registered
+3. **Invitation sent**: The co-subscriber receives an invitation notification
+4. **Confirmation required**: The invited person must accept or reject the invitation
+5. **Access granted**: Once accepted, the subscription appears in their subscription list
+
+### Co-Subscriber Status
+
+Each co-subscriber has a status:
+
+- **Pending** (`confirm: false`): Invitation sent but not yet accepted
+- **Accepted** (`confirm: true`): Invitation accepted, sharing active
+
+## Adding Co-Subscribers to a Subscription
+
+<Steps>
+  <Step title="Open a Subscription">
+    Click on an existing subscription from your calendar or subscription list to edit it.
+  </Step>
+  
+  <Step title="Navigate to Co-Subscribers Tab">
+    In the subscription dialog, go to the **Co-Subscribers** section.
+  </Step>
+  
+  <Step title="Enter Amount and Currency">
+    - Enter the **amount** the co-subscriber will pay
+    - Select their **currency** from the dropdown
+    - Each co-subscriber can have a different amount and currency
+  </Step>
+  
+  <Step title="Enter Email Address">
+    Type the co-subscriber's email address. This must be an email registered with Subflow.
+  </Step>
+  
+  <Step title="Add Co-Subscriber">
+    Click the **Add** button to send the invitation.
+  </Step>
+</Steps>
+
+<Note>
+The email address must belong to a registered Subflow user. If the email is not found, you'll see an error message prompting them to register first.
+</Note>
+
+### Co-Subscriber Validation
+
+When adding a co-subscriber, Subflow validates:
+
+- **Email format**: Must be a valid email address
+- **Registration status**: Email must be registered in Subflow
+- **Uniqueness**: Can't add the same email twice
+- **Self-invitation**: You cannot add your own email
+- **Amount**: Must be greater than 0
+
+Implemented in `components/subscription/co-subscribers-manager.tsx:42`.
+
+## Managing Your Co-Subscribers
+
+### Viewing Co-Subscribers
+
+Co-subscribers are listed under each subscription with:
+
+- Email address
+- Assigned amount and currency
+- Status (Pending or Accepted)
+
+### Removing a Co-Subscriber
+
+<Steps>
+  <Step title="Open the Subscription">
+    Click on the subscription containing the co-subscriber you want to remove.
+  </Step>
+  
+  <Step title="Find the Co-Subscriber">
+    In the **Co-Subscribers** list, locate the person you want to remove.
+  </Step>
+  
+  <Step title="Click Remove">
+    Click the **X** icon next to their email to remove them from the subscription.
+  </Step>
+</Steps>
+
+<Tip>
+Removing a co-subscriber immediately removes their access to the shared subscription.
+</Tip>
+
+## Receiving Co-Subscriber Invitations
+
+### Viewing Pending Invitations
+
+When someone invites you to share a subscription:
+
+1. A **mail icon with a badge** appears in your navigation bar
+2. The badge shows the number of pending invitations
+3. Click the icon to view all pending invitations
+
+### Accepting an Invitation
+
+<Steps>
+  <Step title="Open Invitations">
+    Click the mail icon in the navigation to see pending invitations.
+  </Step>
+  
+  <Step title="Review Subscription Details">
+    Each invitation shows:
+    - Who invited you
+    - Subscription name and service
+    - Your assigned amount and currency
+    - Payment cycle
+  </Step>
+  
+  <Step title="Click Confirm">
+    Click the **Confirm** button to accept the invitation.
+  </Step>
+  
+  <Step title="Subscription Added">
+    The subscription will now appear in your subscription list marked as a **Co Subscription**.
+  </Step>
+</Steps>
+
+### Rejecting an Invitation
+
+If you don't want to share a subscription:
+
+1. Open the invitation from the mail icon
+2. Click the **Reject** button (red X icon)
+3. The invitation is removed from the subscription's co-subscriber list
+
+Implemented in `app/actions/action.ts:213` and `app/actions/action.ts:172`.
+
+## Viewing Shared Subscriptions
+
+### Co-Subscription Indicator
+
+Subscriptions you've joined as a co-subscriber are marked with:
+
+- A **Co Subscription** badge or label
+- Special visual indicator to distinguish them from your own subscriptions
+- The `isCoSubscription` flag set to `true`
+
+### Subscription Query Logic
+
+Subflow finds subscriptions for you using:
+
+```typescript
+$or: [
+  { userId },  // Your own subscriptions
+  {
+    coSubscribers: {
+      $elemMatch: {
+        email: userEmail,
+        confirm: true,
+      }
+    }
+  }  // Subscriptions you've been invited to and confirmed
+]
+```
+
+Implemented in `app/actions/action.ts:46`.
+
+## Leaving a Co-Subscription
+
+If you want to leave a subscription you're sharing:
+
+<Steps>
+  <Step title="Open the Shared Subscription">
+    Click on the co-subscription from your list.
+  </Step>
+  
+  <Step title="Select Leave Option">
+    Look for the **Leave Subscription** option (available for co-subscriptions only).
+  </Step>
+  
+  <Step title="Confirm Leaving">
+    Confirm that you want to leave the subscription.
+  </Step>
+</Steps>
+
+<Note>
+Leaving a co-subscription removes it from your subscription list but doesn't affect the original subscription or other co-subscribers.
+</Note>
+
+## Data Model
+
+### Co-Subscriber Structure
+
+Each co-subscriber is stored with:
+
+```typescript
+{
+  email: string,      // Co-subscriber's email
+  confirm: boolean,   // Invitation status
+  amount: number,     // Their share amount
+  currency: string    // Their currency
+}
+```
+
+### Subscription Model
+
+Co-subscribers are stored as an array within each subscription:
+
+- Field: `coSubscribers` (array, optional)
+- Default: Empty array `[]`
+- Updated when adding or removing co-subscribers
+
+Defined in `models/Subscription.ts:38`.
+
+## Multi-Currency Cost Splitting
+
+One powerful feature of co-subscribers is **multi-currency support**:
+
+- Each co-subscriber can have their own currency
+- The subscription owner sets the amount each person pays
+- Exchange rates are handled automatically
+- Everyone sees costs in their preferred currency
+
+### Example Scenario
+
+- **Subscription**: Netflix Premium - $15.99/month (USD)
+- **Co-subscriber 1**: Pays €5.00 (EUR)
+- **Co-subscriber 2**: Pays ¥800 (JPY)
+- **Owner**: Pays the remaining amount in USD
+
+Each person tracks their portion in their own currency.
+
+## Security and Privacy
+
+### Email Verification
+
+For security, Subflow:
+
+- Validates that invitation emails match the authenticated user
+- Checks email registration before allowing invitations
+- Prevents unauthorized access to shared subscriptions
+
+Implemented in `app/actions/action.ts:139` and `app/actions/action.ts:176`.
+
+### Access Control
+
+Co-subscribers can:
+
+- **View** the subscription in their list
+- **Track** their portion of the cost
+- **Leave** the subscription at any time
+
+Co-subscribers **cannot**:
+
+- Edit the subscription details
+- Add or remove other co-subscribers
+- Delete the original subscription
+
+Only the subscription owner has full edit and delete permissions.
+
+## Best Practices
+
+<Tip>
+**Communicate with co-subscribers**: Before adding someone, confirm they're willing to share the subscription and agree on the cost split.
+</Tip>
+
+<Tip>
+**Use accurate amounts**: Enter the exact amount each person pays to ensure accurate expense tracking for everyone.
+</Tip>
+
+<Tip>
+**Review regularly**: Periodically check your co-subscriber list to ensure everyone is still active and the cost split remains fair.
+</Tip>
+
+<Tip>
+**Match currencies**: When possible, use the same currency as the actual payment to avoid confusion from exchange rate fluctuations.
+</Tip>
+
+## Troubleshooting
+
+**Can't add a co-subscriber?**
+- Verify the email address is correct
+- Confirm the person has registered for Subflow
+- Check that you haven't already added this email
+- Ensure the email isn't your own
+
+**Co-subscriber not seeing the invitation?**
+- Ask them to check the mail icon in their navigation
+- Confirm they're logged into the correct Subflow account
+- Verify their email matches the one you entered
+
+**Invitation not showing as accepted?**
+- The co-subscriber must click **Confirm** on the invitation
+- Check internet connection during confirmation
+- Try refreshing the subscription page
+
+**Can't remove a co-subscriber?**
+- Ensure you're the subscription owner (not a co-subscriber yourself)
+- Try editing the subscription first, then removing the co-subscriber
+- Check that you have a stable connection when saving changes

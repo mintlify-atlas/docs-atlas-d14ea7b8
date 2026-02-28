@@ -1,0 +1,543 @@
+---
+title: Features
+description: Comprehensive overview of all Subflow features and capabilities
+---
+
+## Overview
+
+Subflow is packed with powerful features designed to make subscription management effortless. From AI-powered subscription detection to collaborative cost-sharing, every feature is built with simplicity and clarity in mind.
+
+<CardGroup cols={2}>
+  <Card title="Smart Add" icon="sparkles">
+    AI-powered subscription detection from receipts and text
+  </Card>
+  <Card title="Calendar View" icon="calendar">
+    Visualize all upcoming charges on an intuitive calendar
+  </Card>
+  <Card title="Analytics" icon="chart-pie">
+    Interactive charts showing spending breakdown by service
+  </Card>
+  <Card title="Multi-Currency" icon="dollar-sign">
+    Support for 150+ currencies with real-time conversion
+  </Card>
+  <Card title="Co-Subscribers" icon="users">
+    Share subscriptions with family, friends, or teammates
+  </Card>
+  <Card title="Email Notifications" icon="bell">
+    Get reminders before subscription renewals
+  </Card>
+  <Card title="Cloud Sync" icon="cloud">
+    Automatic sync across all your devices
+  </Card>
+  <Card title="SVGL Icons" icon="image">
+    Beautiful logos for 100+ popular services
+  </Card>
+</CardGroup>
+
+---
+
+## Core Features
+
+### Centralized Subscription Management
+
+Track, edit, and organize all your subscriptions in one unified dashboard.
+
+**Key Capabilities:**
+- Add unlimited subscriptions (no restrictions)
+- Edit subscription details anytime
+- Delete subscriptions when cancelled
+- Search and filter by service name
+- View all subscriptions in a list or calendar format
+- Support for both monthly and yearly billing cycles
+
+**Supported Subscription Types:**
+- Streaming services (Netflix, Spotify, Disney+, etc.)
+- SaaS tools (GitHub, Notion, Figma, etc.)
+- Cloud storage (Dropbox, Google Drive, iCloud, etc.)
+- Gaming subscriptions (Xbox Game Pass, PlayStation Plus, etc.)
+- News and media (New York Times, Medium, etc.)
+- Any custom recurring expense
+
+<Tip>
+  Subflow includes over 100 pre-configured services with icons from the [SVGL](https://svgl.app) library. If your service isn't listed, you can easily create a custom one.
+</Tip>
+
+---
+
+### Calendar-Based Tracking
+
+Visualize all your subscription payment dates on an intuitive monthly calendar.
+
+**How It Works:**
+
+The calendar displays:
+- Each day of the month in a grid layout
+- Subscriptions on their billing dates
+- Service icons for quick recognition
+- Payment amounts in your preferred currency
+- Multiple subscriptions per day (stacked or expandable)
+
+**Navigation:**
+- Click the left/right arrows to switch months
+- View past payments and future charges
+- Today's date is highlighted
+- Days with subscriptions are clearly marked
+
+**Interaction:**
+- **Desktop**: Hover over subscriptions to see a quick preview, click to edit or delete
+- **Mobile**: Tap subscriptions to open a detailed drawer with actions
+
+<Note>
+  Yearly subscriptions are displayed on their payment date, but by default they're amortized (divided by 12) and shown on the calendar every month. You can change this behavior in Preferences.
+</Note>
+
+---
+
+### Visual Spending Analytics
+
+Understand your subscription spending with beautiful, interactive charts.
+
+**Analytics Include:**
+
+1. **Pie Chart Visualization**
+   - Interactive donut chart showing spending by service
+   - Service icons displayed on the chart
+   - Percentage breakdown of each subscription
+   - Responsive design for mobile and desktop
+
+2. **Subscription List**
+   - Sorted by cost percentage (highest to lowest)
+   - Monthly cost for each subscription
+   - Percentage of total monthly spend
+   - Total amount spent since subscription started
+   - Start date for each subscription
+
+3. **Monthly Spend Summary**
+   - Total monthly cost displayed prominently
+   - Automatically updates when subscriptions change
+   - Currency selector for preferred display currency
+
+**Use Cases:**
+- Identify your most expensive subscriptions
+- Find subscriptions you might want to cancel
+- Track spending trends over time
+- Justify subscription costs to family or team
+- Budget for upcoming months
+
+<Tip>
+  The analytics automatically convert yearly subscriptions to monthly averages for fair comparison, unless you've disabled amortization in Preferences.
+</Tip>
+
+---
+
+### Smart Add with AI Detection
+
+Quickly add subscriptions using AI-powered content analysis.
+
+**How Smart Add Works:**
+
+<Steps>
+  <Step title="Choose Input Method">
+    Select either:
+    - **Upload**: Receipt, screenshot, or invoice image (up to 10MB)
+    - **Text**: Paste email receipt, subscription details, or description
+  </Step>
+  
+  <Step title="AI Analysis">
+    Subflow's AI (powered by Google Gemini) analyzes the content and extracts:
+    - Service name
+    - Subscription price
+    - Currency
+    - Billing date
+    - Payment cycle (monthly/yearly)
+    - Matches against known services in the SVGL library
+  </Step>
+  
+  <Step title="Review and Edit">
+    The AI-detected information is displayed in an editable form. You can:
+    - Correct any mistakes
+    - Adjust the service selection
+    - Modify the price or date
+    - Re-analyze if needed
+  </Step>
+  
+  <Step title="Save Subscription">
+    Click **Add Subscription** to save it to your dashboard.
+  </Step>
+</Steps>
+
+**What Content Works Best:**
+- Email receipts with pricing details
+- Screenshots of subscription confirmation pages
+- Invoice PDFs or images
+- Text descriptions like "Netflix Premium - $15.99/month starting on the 1st"
+
+**Supported File Formats:**
+- Images: JPG, PNG, WebP, HEIC, HEIF
+- Text: Plain text pasted directly
+- Maximum file size: 10MB
+
+<Warning>
+  Smart Add requires clear, readable content. Blurry images or incomplete text may result in inaccurate detection. You can always use Manual Add for full control.
+</Warning>
+
+---
+
+### Multi-Language Support
+
+Subflow is fully localized in four languages, making it accessible to users worldwide.
+
+**Supported Languages:**
+- **English** (en)
+- **Traditional Chinese** (zh)
+- **Japanese** (ja)
+- **Spanish** (es)
+
+**Language Features:**
+- Automatic detection based on browser settings
+- Manual language selection from the interface
+- All UI text, labels, and messages translated
+- Email notifications in your preferred language
+- Currency formatting adapted to locale
+
+**How to Change Language:**
+
+The language is selected during login or can be changed via the language selector in the header.
+
+<Info>
+  Email notifications can use a different language than your interface. This is useful if you want the app in English but prefer email reminders in another language.
+</Info>
+
+---
+
+### Multi-Currency Support
+
+Track subscriptions in any currency with automatic real-time conversion.
+
+**Currency Features:**
+
+- **150+ Supported Currencies**: From USD to Bitcoin, including crypto
+- **Real-Time Exchange Rates**: Updated regularly from reliable financial APIs
+- **Per-Subscription Currency**: Each subscription can have its own currency
+- **Display Currency**: View all amounts in your preferred currency
+- **Automatic Conversion**: All calculations done automatically
+
+**How It Works:**
+
+1. Each subscription stores its price in the original currency
+2. When viewing the calendar or analytics, select your preferred display currency
+3. Subflow converts all amounts using current exchange rates
+4. Monthly spend is calculated in the display currency
+
+**Example:**
+If you have:
+- Netflix in USD ($15.99)
+- Spotify in EUR (€9.99)
+- Disney+ in GBP (£7.99)
+
+You can view the total in JPY, CAD, or any currency you prefer.
+
+<Tip>
+  Your currency preference is saved and persists across sessions. It's stored locally in your browser.
+</Tip>
+
+---
+
+### Cloud Sync Across Devices
+
+Your subscription data is automatically synced across all devices in real-time.
+
+**Sync Features:**
+
+- **Real-Time Updates**: Changes appear instantly on all logged-in devices
+- **Multi-Device Support**: Access from desktop, mobile, tablet
+- **Automatic Backup**: Your data is securely stored in the cloud
+- **No Manual Sync Required**: Everything syncs automatically
+- **Offline Tolerance**: Local changes sync when you reconnect
+
+**How Cloud Sync Works:**
+
+Subflow uses MongoDB Atlas for cloud storage. When you:
+- Add a subscription → Saved to the cloud immediately
+- Edit details → Updated across all devices in real-time
+- Delete a subscription → Removed everywhere instantly
+
+**Data Stored in the Cloud:**
+- All subscription information
+- Co-subscriber relationships
+- Email notification preferences
+- User preferences (amortization settings, etc.)
+
+<Info>
+  Currency preference is stored locally in your browser, not in the cloud. This is by design for faster performance.
+</Info>
+
+---
+
+### Email Renewal Notifications
+
+Never miss a subscription renewal with automatic email reminders.
+
+**Notification Features:**
+
+- **Pre-Renewal Reminders**: Emails sent 3 days before subscriptions renew
+- **Subscription Details**: Includes service name, price, and payment date
+- **Multi-Language Support**: Choose your preferred email language
+- **Enable/Disable Toggle**: Turn notifications on or off anytime
+- **Custom Email Address**: Use any email (doesn't have to be your login email)
+
+**Setting Up Notifications:**
+
+<Steps>
+  <Step title="Open Settings">
+    Click the **More Menu** (three dots) in the toolbar and select **Email Notification**.
+  </Step>
+  
+  <Step title="Enable Notifications">
+    Toggle the **Notify** switch to ON.
+  </Step>
+  
+  <Step title="Enter Email Address">
+    Provide the email where you want to receive notifications.
+  </Step>
+  
+  <Step title="Choose Language">
+    Select your preferred language for email content (English, Chinese, Japanese, or Spanish).
+  </Step>
+  
+  <Step title="Save Settings">
+    Click **Save Settings** to activate notifications.
+  </Step>
+</Steps>
+
+**What's Included in Notification Emails:**
+- Subscription service name and icon
+- Renewal amount and currency
+- Payment date
+- Payment cycle (monthly/yearly)
+- All upcoming subscriptions for the next 3 days
+
+<Note>
+  Notifications are sent at 12:00 AM UTC, 3 days before each subscription's renewal date. Make sure your email address is correct and check spam folders if you don't receive them.
+</Note>
+
+---
+
+### Co-Subscriber Management
+
+Share subscriptions with family, friends, or teammates and manage shared costs together.
+
+**Co-Subscriber Features:**
+
+- **Email-Based Invitations**: Invite others by email address
+- **Custom Amounts**: Specify how much each co-subscriber pays
+- **Multi-Currency**: Each co-subscriber can have their own currency
+- **Pending Invitations**: Co-subscribers must accept invitations
+- **Status Tracking**: See who has accepted and who is pending
+- **Flexible Management**: Add or remove co-subscribers anytime
+- **Shared View**: Co-subscribers see the subscription in their calendar
+
+**How Co-Subscribers Work:**
+
+<Steps>
+  <Step title="Edit Subscription">
+    Open the subscription you want to share and click **Manage Co-Subscribers**.
+  </Step>
+  
+  <Step title="Add Co-Subscriber">
+    Enter the email address of the person you want to invite. They must have a Subflow account.
+  </Step>
+  
+  <Step title="Set Amount">
+    Specify how much this co-subscriber pays. This can be different from the main subscription price.
+  </Step>
+  
+  <Step title="Choose Currency">
+    Select the currency for this co-subscriber's amount.
+  </Step>
+  
+  <Step title="Send Invitation">
+    Click **Add** to send the invitation. The co-subscriber will receive a notification.
+  </Step>
+  
+  <Step title="Co-Subscriber Accepts">
+    The invited user sees a notification (mail icon) in their toolbar. They can accept or reject the invitation.
+  </Step>
+  
+  <Step title="Shared Subscription">
+    Once accepted, the subscription appears in both users' calendars. The co-subscriber sees "Co Subscription" indicator.
+  </Step>
+</Steps>
+
+**Use Cases:**
+- Family Netflix or Spotify plans
+- Shared team SaaS tools (Notion, Figma, etc.)
+- Splitting costs with roommates
+- Managing household subscription expenses
+
+**Co-Subscriber Actions:**
+- **Owner**: Can edit, delete, add/remove co-subscribers
+- **Co-Subscriber**: Can view details and leave the subscription
+
+<Warning>
+  Co-subscribers can only be added if they have an active Subflow account with the same email address. The email must match their registered Subflow email exactly.
+</Warning>
+
+---
+
+### SVGL Icon Library Integration
+
+Subflow includes beautiful, recognizable icons for over 100 popular services.
+
+**Icon Features:**
+
+- **100+ Pre-Configured Services**: Netflix, Spotify, Disney+, GitHub, Notion, and many more
+- **SVG Format**: Crisp, scalable icons that look great on any screen
+- **Auto-Matching**: Smart Add AI matches services to icons automatically
+- **Custom Service Support**: Services without icons show the first letter as a badge
+
+**Popular Services Included:**
+
+Streaming:
+- Netflix, Disney+, Hulu, HBO Max, Apple TV+, Prime Video
+- Spotify, Apple Music, YouTube Music, SoundCloud
+
+SaaS & Productivity:
+- GitHub, GitLab, Bitbucket
+- Notion, Evernote, Obsidian
+- Figma, Adobe Creative Cloud, Canva
+- Slack, Discord, Zoom, Microsoft Teams
+
+Cloud Storage:
+- Dropbox, Google Drive, iCloud, OneDrive
+
+Gaming:
+- Xbox Game Pass, PlayStation Plus, Nintendo Switch Online
+- Steam, Epic Games, EA Play
+
+And many more!
+
+<Info>
+  Icons are powered by [SVGL](https://svgl.app), an open-source SVG logo library. If you'd like to add a service icon, you can contribute to the SVGL project.
+</Info>
+
+---
+
+## Additional Features
+
+### Preferences and Customization
+
+**Available Preferences:**
+
+- **Do Not Amortize Yearly Subscriptions**: By default, yearly subscriptions are divided by 12 and shown every month. Enable this to show yearly subscriptions only in their payment month.
+
+**How to Access Preferences:**
+
+1. Click the **More Menu** (three dots) in the toolbar
+2. Select **Preferences**
+3. Toggle settings as desired
+4. Click **Save Settings**
+
+---
+
+### Secure Authentication
+
+Subflow uses [Clerk](https://clerk.com) for enterprise-grade authentication.
+
+**Security Features:**
+- OAuth support (Google, GitHub, etc.)
+- Email/password authentication with hashing
+- Multi-factor authentication (MFA) available
+- Session management and JWT tokens
+- Secure password reset flows
+
+**Privacy:**
+- Subflow doesn't store passwords (handled by Clerk)
+- Personal data is encrypted at rest
+- No data is shared with third parties
+- GDPR and privacy law compliant
+
+---
+
+### Mobile-Friendly Design
+
+Subflow is fully responsive and optimized for mobile devices.
+
+**Mobile Features:**
+- Touch-optimized calendar interface
+- Drawer-based dialogs for easy interaction
+- Swipe gestures for navigation
+- Responsive charts and analytics
+- Fast loading and performance
+
+---
+
+### Dark Mode Support
+
+Subflow features a beautiful dark theme that's easy on the eyes.
+
+**Theme Features:**
+- Automatic dark mode based on system preferences
+- Manual theme toggle (coming soon)
+- Optimized color contrast for readability
+- Consistent theming across all components
+
+---
+
+## Feature Comparison
+
+| Feature | Subflow | Typical Competitor |
+|---------|---------|-------------------|
+| **Price** | Free Forever | $5-15/month |
+| **Smart Add (AI)** | ✅ Yes | ❌ No |
+| **Multi-Currency** | ✅ 150+ | ⚠️ Limited |
+| **Co-Subscribers** | ✅ Yes | ❌ No |
+| **Email Notifications** | ✅ Yes | ✅ Yes |
+| **Cloud Sync** | ✅ Real-time | ✅ Yes |
+| **Calendar View** | ✅ Yes | ✅ Yes |
+| **Analytics** | ✅ Interactive Charts | ⚠️ Basic |
+| **Multi-Language** | ✅ 4 Languages | ⚠️ 1-2 Languages |
+| **Open Source** | ✅ AGPL-3.0 | ❌ Closed |
+
+---
+
+## Coming Soon
+
+We're constantly improving Subflow. Here are some features in development:
+
+- **Browser Extension**: Add subscriptions directly from service websites
+- **Spending Trends**: Historical charts showing spending over time
+- **Budget Alerts**: Get notified when spending exceeds a threshold
+- **Export Data**: Download your subscription data as CSV or JSON
+- **Recurring Tasks**: Track non-financial recurring items (appointments, renewals, etc.)
+- **Telegram/Discord Notifications**: Alternative notification channels
+
+<Info>
+  Have a feature request? Subflow is open source! Check out the [Development Guide](/contributing/development-guide) to learn how to contribute.
+</Info>
+
+---
+
+## Technical Stack
+
+Subflow is built with modern, reliable technologies:
+
+- **Framework**: Next.js 16 with React 19
+- **Database**: MongoDB Atlas (cloud)
+- **Authentication**: Clerk
+- **AI**: Google Gemini
+- **Hosting**: Vercel
+- **Styling**: Tailwind CSS
+- **Charts**: Recharts
+- **Icons**: Lucide React + SVGL
+- **Animations**: Framer Motion
+
+---
+
+## Get Started
+
+Ready to experience all these features?
+
+<Card title="Start Your Free Account" icon="rocket" href="/quickstart">
+  Follow our quickstart guide to create your account and add your first subscription in under 2 minutes.
+</Card>

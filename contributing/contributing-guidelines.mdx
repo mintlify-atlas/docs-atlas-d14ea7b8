@@ -1,0 +1,391 @@
+---
+title: Contributing Guidelines
+description: Learn how to contribute to Subflow and help make subscription management better for everyone
+---
+
+Thank you for your interest in contributing to Subflow! We welcome contributions from the community and are grateful for your support.
+
+## Code of Conduct
+
+By participating in this project, you agree to maintain a respectful and inclusive environment for all contributors. Please:
+
+- Be respectful and considerate in your communications
+- Welcome newcomers and help them get started
+- Focus on constructive feedback
+- Respect differing viewpoints and experiences
+
+## How to Contribute
+
+There are many ways to contribute to Subflow:
+
+<CardGroup cols={2}>
+  <Card title="Report Bugs" icon="bug">
+    Found a bug? Open an issue with detailed reproduction steps
+  </Card>
+  <Card title="Suggest Features" icon="lightbulb">
+    Have an idea? Share it in the issues or discussions
+  </Card>
+  <Card title="Improve Documentation" icon="book">
+    Help us improve our docs for better clarity
+  </Card>
+  <Card title="Submit Code" icon="code">
+    Fix bugs or implement new features via pull requests
+  </Card>
+</CardGroup>
+
+## Getting Started
+
+Before you start contributing, make sure you have:
+
+1. Read the [Development Guide](/contributing/development-guide) to set up your local environment
+2. Familiarized yourself with the [technology stack](/contributing/development-guide#technology-stack)
+3. Reviewed existing issues and pull requests to avoid duplicates
+
+## Contribution Workflow
+
+<Steps>
+  <Step title="Fork and clone">
+    Fork the Subflow repository on GitHub and clone it to your local machine:
+
+    ```bash
+    git clone https://github.com/YOUR_USERNAME/subflow.git
+    cd subflow
+    ```
+  </Step>
+
+  <Step title="Create a branch">
+    Create a new branch for your feature or fix. Use a descriptive name:
+
+    ```bash
+    # For features
+    git checkout -b feature/add-expense-analytics
+
+    # For bug fixes
+    git checkout -b fix/calendar-date-display
+
+    # For documentation
+    git checkout -b docs/update-api-reference
+    ```
+  </Step>
+
+  <Step title="Make your changes">
+    Make your changes and test them locally. Ensure:
+
+    - Your code follows the project's style guide
+    - All existing tests pass
+    - You've added tests for new functionality
+    - The application builds without errors
+  </Step>
+
+  <Step title="Format and lint">
+    Before committing, format your code and run the linter:
+
+    <CodeGroup>
+      ```bash npm
+      npm run format
+      npm run lint
+      npm run build
+      ```
+
+      ```bash yarn
+      yarn format
+      yarn lint
+      yarn build
+      ```
+
+      ```bash pnpm
+      pnpm format
+      pnpm lint
+      pnpm build
+      ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Commit your changes">
+    Write clear, descriptive commit messages following this format:
+
+    ```bash
+    # Good commit messages
+    git commit -m "feat: add export to CSV functionality"
+    git commit -m "fix: resolve calendar timezone issue"
+    git commit -m "docs: update installation instructions"
+    git commit -m "refactor: simplify subscription calculation logic"
+
+    # Commit message prefixes
+    # feat: New feature
+    # fix: Bug fix
+    # docs: Documentation changes
+    # style: Code style changes (formatting, etc.)
+    # refactor: Code refactoring
+    # test: Adding or updating tests
+    # chore: Maintenance tasks
+    ```
+  </Step>
+
+  <Step title="Push and create PR">
+    Push your branch to your fork and create a pull request:
+
+    ```bash
+    git push origin your-branch-name
+    ```
+
+    Then go to GitHub and create a pull request from your branch to the main Subflow repository.
+  </Step>
+</Steps>
+
+## Pull Request Guidelines
+
+When submitting a pull request, please:
+
+<AccordionGroup>
+  <Accordion title="Write a clear description">
+    Your PR description should include:
+
+    - **What** changes you made
+    - **Why** you made these changes
+    - **How** to test the changes
+    - Any **breaking changes** or migration notes
+
+    Example:
+    ```markdown
+    ## Description
+    Adds CSV export functionality for subscription data.
+
+    ## Motivation
+    Users requested the ability to export their subscription data for
+    external analysis and backup purposes.
+
+    ## Changes
+    - Added CSV export button to subscription dashboard
+    - Implemented CSV generation utility
+    - Added tests for export functionality
+
+    ## Testing
+    1. Navigate to subscriptions page
+    2. Click "Export to CSV" button
+    3. Verify downloaded CSV contains all subscription data
+    ```
+  </Accordion>
+
+  <Accordion title="Include screenshots for UI changes">
+    If your changes affect the user interface:
+
+    - Add before/after screenshots
+    - Show the changes on different screen sizes (mobile, tablet, desktop)
+    - Include screenshots for both light and dark themes if applicable
+  </Accordion>
+
+  <Accordion title="Reference related issues">
+    Link to any related issues using GitHub keywords:
+
+    ```markdown
+    Closes #123
+    Fixes #456
+    Related to #789
+    ```
+  </Accordion>
+
+  <Accordion title="Keep PRs focused">
+    - One PR should address one feature or fix
+    - Avoid mixing unrelated changes
+    - Split large changes into smaller, reviewable PRs
+  </Accordion>
+
+  <Accordion title="Ensure CI passes">
+    - Wait for all checks to pass
+    - Fix any linting or build errors
+    - Address reviewer feedback promptly
+  </Accordion>
+</AccordionGroup>
+
+## Code Style Guide
+
+### TypeScript
+
+- Use TypeScript for all new code
+- Enable strict type checking
+- Avoid using `any` type when possible
+- Define proper interfaces and types
+
+```typescript
+// Good
+interface Subscription {
+  id: string;
+  name: string;
+  price: number;
+  billingCycle: 'monthly' | 'yearly';
+}
+
+// Avoid
+const subscription: any = { ... };
+```
+
+### React Components
+
+- Use functional components with hooks
+- Follow component naming conventions (PascalCase)
+- Keep components small and focused
+- Use proper prop types
+
+```typescript
+// Good
+interface ButtonProps {
+  variant?: 'primary' | 'secondary';
+  onClick: () => void;
+  children: React.ReactNode;
+}
+
+export function Button({ variant = 'primary', onClick, children }: ButtonProps) {
+  return <button onClick={onClick}>{children}</button>;
+}
+```
+
+### Formatting
+
+The project uses Prettier with the following configuration:
+
+- **Tab Width**: 4 spaces
+- **Semicolons**: Required
+- **Tailwind Plugin**: Enabled for class sorting
+
+<Tip>
+  Run `npm run format` before committing to automatically format your code.
+</Tip>
+
+### File Organization
+
+- Group related files together
+- Use index files for cleaner imports
+- Follow the established project structure
+- Keep file names descriptive and lowercase with dashes
+
+## Testing Guidelines
+
+While writing tests:
+
+- Write tests for new features
+- Update tests when modifying existing features
+- Ensure all tests pass before submitting a PR
+- Test edge cases and error scenarios
+- Test across different browsers and devices for UI changes
+
+## Internationalization (i18n)
+
+Subflow supports multiple languages. When adding new text:
+
+- Use the `next-intl` translation system
+- Add translations for both English and Traditional Chinese
+- Never hardcode user-facing text
+- Use descriptive translation keys
+
+```typescript
+// Good
+import { useTranslations } from 'next-intl';
+
+const t = useTranslations('subscription');
+<h1>{t('title')}</h1>
+
+// Avoid
+<h1>My Subscriptions</h1>
+```
+
+## Database Changes
+
+When making changes to MongoDB schemas:
+
+- Use Mongoose schema definitions
+- Document schema changes in your PR
+- Consider migration strategies for existing data
+- Test with both empty and populated databases
+
+## Reporting Issues
+
+When reporting bugs, please include:
+
+<Steps>
+  <Step title="Clear title">
+    Use a descriptive title that summarizes the issue:
+
+    - Good: "Calendar displays wrong timezone for recurring subscriptions"
+    - Avoid: "Calendar broken"
+  </Step>
+
+  <Step title="Environment details">
+    - Operating system and version
+    - Browser and version
+    - Subflow version or commit hash
+  </Step>
+
+  <Step title="Reproduction steps">
+    Provide clear steps to reproduce the issue:
+
+    1. Go to subscriptions page
+    2. Add a new subscription
+    3. Set billing cycle to monthly
+    4. Notice incorrect date in calendar
+  </Step>
+
+  <Step title="Expected vs actual behavior">
+    - **Expected**: Calendar should show subscription on the 15th
+    - **Actual**: Calendar shows subscription on the 14th
+  </Step>
+
+  <Step title="Screenshots or logs">
+    Include:
+    - Screenshots showing the issue
+    - Console errors (if any)
+    - Network errors (if applicable)
+  </Step>
+</Steps>
+
+## Feature Requests
+
+When suggesting new features:
+
+1. **Search existing issues** to avoid duplicates
+2. **Describe the problem** you're trying to solve
+3. **Propose a solution** with details about implementation
+4. **Consider alternatives** and explain why your approach is better
+5. **Add mockups** if suggesting UI changes
+
+## Documentation Contributions
+
+Improving documentation is a valuable contribution:
+
+- Fix typos and grammatical errors
+- Clarify confusing explanations
+- Add missing information
+- Improve code examples
+- Update outdated content
+
+<Note>
+  Documentation changes should be made in the main repository and will be reflected in the docs site.
+</Note>
+
+## Community and Support
+
+- **GitHub Issues**: Bug reports and feature requests
+- **Pull Requests**: Code contributions
+- **Discussions**: General questions and ideas
+
+## Recognition
+
+All contributors will be recognized in our project. Your contributions make Subflow better for everyone!
+
+<Tip>
+  If you enjoy Subflow, consider supporting the project through [Buy Me a Coffee](https://www.buymeacoffee.com/yencheng).
+</Tip>
+
+## License
+
+By contributing to Subflow, you agree that your contributions will be licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
+
+## Questions?
+
+If you have questions about contributing:
+
+1. Check the [Development Guide](/contributing/development-guide)
+2. Search existing issues and discussions
+3. Open a new discussion on GitHub
+
+Thank you for contributing to Subflow!

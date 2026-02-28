@@ -1,0 +1,357 @@
+---
+title: Environment Variables
+description: Complete reference for all Subflow environment variables
+---
+
+## Overview
+
+Subflow uses environment variables to configure authentication, database connections, API integrations, and optional features. Create a `.env.local` file in the root directory to configure your instance.
+
+<Warning>
+  **Security**: Never commit `.env.local` or any file containing these values to version control. Add them to your `.gitignore` file.
+</Warning>
+
+## Required Variables
+
+These environment variables are required for Subflow to function:
+
+### Authentication (Clerk)
+
+<ParamField path="NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY" type="string" required>
+  Your Clerk publishable key. This is safe to expose in the browser.
+  
+  **How to get it:**
+  1. Go to [Clerk Dashboard](https://dashboard.clerk.com)
+  2. Select your application
+  3. Navigate to **API Keys**
+  4. Copy the **Publishable Key**
+  
+  ```bash
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxxxxxxxxxxxx
+  ```
+</ParamField>
+
+<ParamField path="CLERK_SECRET_KEY" type="string" required>
+  Your Clerk secret key for server-side authentication.
+  
+  <Warning>
+    This key must be kept secret and should never be exposed to the client.
+  </Warning>
+  
+  **How to get it:**
+  1. In your Clerk Dashboard, go to **API Keys**
+  2. Copy the **Secret Key**
+  
+  ```bash
+  CLERK_SECRET_KEY=sk_test_xxxxxxxxxxxxx
+  ```
+</ParamField>
+
+<ParamField path="CLERK_WEBHOOK_SIGNING_SECRET" type="string" required>
+  Secret used to verify webhook requests from Clerk.
+  
+  **How to get it:**
+  1. In Clerk Dashboard, go to **Webhooks**
+  2. Create an endpoint at `/api/webhooks`
+  3. Select the `user.deleted` event
+  4. Copy the **Signing Secret**
+  
+  ```bash
+  CLERK_WEBHOOK_SIGNING_SECRET=whsec_xxxxxxxxxxxxx
+  ```
+  
+  <Info>
+    This webhook is used to clean up user data when a user deletes their account.
+  </Info>
+</ParamField>
+
+### Clerk URL Configuration
+
+<ParamField path="NEXT_PUBLIC_CLERK_SIGN_IN_URL" type="string" required>
+  The URL path for the sign-in page.
+  
+  ```bash
+  NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
+  ```
+  
+  Default: `/login`
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_CLERK_SIGN_IN_FORCE_REDIRECT_URL" type="string" required>
+  Where to redirect users after signing in.
+  
+  ```bash
+  NEXT_PUBLIC_CLERK_SIGN_IN_FORCE_REDIRECT_URL=/subscription
+  ```
+  
+  Default: `/subscription`
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL" type="string" required>
+  Where to redirect users after signing up.
+  
+  ```bash
+  NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL=/subscription
+  ```
+  
+  Default: `/subscription`
+</ParamField>
+
+### Database
+
+<ParamField path="MONGODB_URI" type="string" required>
+  MongoDB connection string.
+  
+  **Examples:**
+  
+  Local MongoDB:
+  ```bash
+  MONGODB_URI=mongodb://localhost:27017
+  ```
+  
+  MongoDB Atlas:
+  ```bash
+  MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority
+  ```
+  
+  With authentication:
+  ```bash
+  MONGODB_URI=mongodb://username:password@localhost:27017/admin
+  ```
+  
+  <Info>
+    Subflow automatically creates a database named `subflow` and the required collections.
+  </Info>
+  
+  <Warning>
+    Ensure your MongoDB version is 5.0 or higher for optimal compatibility.
+  </Warning>
+</ParamField>
+
+### Currency Exchange API
+
+<ParamField path="EXCHANGERATE_HOST_API_KEY" type="string" required>
+  API key for ExchangeRate-API to enable currency conversion.
+  
+  **How to get it:**
+  1. Sign up at [ExchangeRate-API](https://www.exchangerate-api.com/)
+  2. Choose a plan (free tier available)
+  3. Copy your API key from the dashboard
+  
+  ```bash
+  EXCHANGERATE_HOST_API_KEY=your_exchangerate_api_key
+  ```
+  
+  <Info>
+    This is required for the multi-currency feature to work properly.
+  </Info>
+</ParamField>
+
+## Optional Variables
+
+These variables enable optional features. Subflow will work without them, but some features will be disabled.
+
+### Email Notifications (Zeabur Email)
+
+<ParamField path="EMAIL_API_KEY" type="string">
+  API key for sending email notifications via Zeabur Email service.
+  
+  **How to get it:**
+  1. Sign up at [Zeabur](https://zeabur.com)
+  2. Enable the Email service
+  3. Copy your API key
+  
+  ```bash
+  EMAIL_API_KEY=your_zeabur_email_api_key
+  ```
+  
+  <Info>
+    If not set, email notification features will be disabled.
+  </Info>
+</ParamField>
+
+<ParamField path="EMAIL_FROM_ADDRESS" type="string">
+  The email address to send notifications from.
+  
+  ```bash
+  EMAIL_FROM_ADDRESS=noreply@yourdomain.com
+  ```
+  
+  <Note>
+    Must be a verified sender address in your email service.
+  </Note>
+</ParamField>
+
+### AI Features (Smart Add Subscription)
+
+Subflow supports two AI provider options: Zeabur AI Hub or Vercel AI Gateway. You only need to configure one.
+
+#### Option 1: Zeabur AI Hub
+
+<ParamField path="AI_API_KEY" type="string">
+  API key for Zeabur AI Hub.
+  
+  **How to get it:**
+  1. Sign up at [Zeabur](https://zeabur.com)
+  2. Enable AI Hub service
+  3. Copy your API key
+  
+  ```bash
+  AI_API_KEY=your_zeabur_ai_api_key
+  ```
+</ParamField>
+
+<ParamField path="AI_API_ENDPOINT" type="string">
+  The endpoint URL for Zeabur AI Hub.
+  
+  ```bash
+  AI_API_ENDPOINT=https://gateway.ai.cloudflare.com/v1/xxxxxxxxxxxxx
+  ```
+</ParamField>
+
+<ParamField path="AI_MODEL_NAME" type="string">
+  The AI model to use for smart subscription detection.
+  
+  ```bash
+  AI_MODEL_NAME=@cf/meta/llama-3.1-8b-instruct
+  ```
+  
+  Common models:
+  - `@cf/meta/llama-3.1-8b-instruct`
+  - `@cf/meta/llama-3.3-70b-instruct-fp8-fast`
+</ParamField>
+
+#### Option 2: Vercel AI Gateway
+
+<ParamField path="AI_GATEWAY_API_KEY" type="string">
+  API key for Vercel AI Gateway.
+  
+  **How to get it:**
+  1. Go to your [Vercel Dashboard](https://vercel.com/dashboard)
+  2. Navigate to AI Gateway settings
+  3. Generate an API key
+  
+  ```bash
+  AI_GATEWAY_API_KEY=your_vercel_ai_gateway_key
+  ```
+</ParamField>
+
+<ParamField path="AI_GATEWAY_MODEL" type="string">
+  The AI model to use with Vercel AI Gateway.
+  
+  ```bash
+  AI_GATEWAY_MODEL=gpt-4
+  ```
+  
+  Supported models depend on your AI Gateway configuration:
+  - `gpt-4`
+  - `gpt-3.5-turbo`
+  - `claude-3-opus`
+  - etc.
+</ParamField>
+
+<Info>
+  **AI Feature**: If no AI variables are configured, the Smart Add Subscription feature will be disabled, but all other features will work normally.
+</Info>
+
+## Example Configuration
+
+Here's a complete example `.env.local` file with all variables:
+
+```bash
+# Clerk Authentication (Required)
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxxxxxxxxxxxx
+CLERK_SECRET_KEY=sk_test_xxxxxxxxxxxxx
+CLERK_WEBHOOK_SIGNING_SECRET=whsec_xxxxxxxxxxxxx
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
+NEXT_PUBLIC_CLERK_SIGN_IN_FORCE_REDIRECT_URL=/subscription
+NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL=/subscription
+
+# Database (Required)
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority
+
+# Currency API (Required)
+EXCHANGERATE_HOST_API_KEY=your_api_key_here
+
+# Email Notifications (Optional)
+EMAIL_API_KEY=your_zeabur_email_key
+EMAIL_FROM_ADDRESS=noreply@yourdomain.com
+
+# AI Features - Option 1: Zeabur AI Hub (Optional)
+AI_API_KEY=your_zeabur_ai_key
+AI_API_ENDPOINT=https://gateway.ai.cloudflare.com/v1/xxxxxxxxxxxxx
+AI_MODEL_NAME=@cf/meta/llama-3.1-8b-instruct
+
+# AI Features - Option 2: Vercel AI Gateway (Optional)
+# AI_GATEWAY_API_KEY=your_vercel_ai_key
+# AI_GATEWAY_MODEL=gpt-4
+```
+
+## Environment-Specific Configuration
+
+### Development
+
+For local development, use `.env.local`:
+
+```bash
+cp .env.example .env.local
+# Edit .env.local with your development credentials
+```
+
+### Production
+
+For production deployments:
+
+<Tabs>
+  <Tab title="Vercel">
+    1. Go to your project settings
+    2. Navigate to **Environment Variables**
+    3. Add each variable with the production value
+    4. Redeploy your application
+  </Tab>
+  
+  <Tab title="Docker">
+    Use a `.env` file or pass variables directly:
+    
+    ```bash
+    docker run -d \
+      -e NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_xxx \
+      -e CLERK_SECRET_KEY=sk_xxx \
+      -e MONGODB_URI=mongodb://... \
+      # ... other variables
+      your-image:latest
+    ```
+    
+    Or use a `.env` file:
+    ```bash
+    docker run -d --env-file .env.production your-image:latest
+    ```
+  </Tab>
+  
+  <Tab title="Other Platforms">
+    Refer to your hosting platform's documentation for setting environment variables:
+    - **Railway**: Project Settings → Variables
+    - **Render**: Environment → Environment Variables
+    - **Fly.io**: `fly secrets set KEY=value`
+    - **DigitalOcean App Platform**: App Settings → Environment Variables
+  </Tab>
+</Tabs>
+
+<Warning>
+  **Production Security**: Always use different credentials for production than development. Never use test/development API keys in production.
+</Warning>
+
+## Validation
+
+To verify your environment variables are correctly set:
+
+1. **Start the application**: `npm run dev`
+2. **Check the console**: Look for any environment variable warnings
+3. **Test features**:
+   - Authentication (Clerk keys)
+   - Database connection (MongoDB URI)
+   - Currency conversion (ExchangeRate API)
+   - Email notifications (if configured)
+   - AI features (if configured)
+
+If any required variable is missing or invalid, the application will log an error indicating which variable needs attention.

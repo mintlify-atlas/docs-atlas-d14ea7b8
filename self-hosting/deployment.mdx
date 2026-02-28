@@ -1,0 +1,677 @@
+---
+title: Deployment
+description: Deploy Subflow to production on Vercel, Docker, and other platforms
+---
+
+## Overview
+
+Subflow is a Next.js 15 application that can be deployed to various platforms. This guide covers deployment options from fully managed platforms to self-hosted solutions.
+
+## Prerequisites
+
+Before deploying, ensure you have:
+
+- Completed [Initial Setup](/self-hosting/setup)
+- Configured all [Environment Variables](/self-hosting/environment-variables)
+- Set up your [MongoDB Database](/self-hosting/database-setup)
+- Tested the application locally
+
+<Warning>
+  **Production Checklist**: Use production credentials, enable security features, set up monitoring, and configure backups before going live.
+</Warning>
+
+## Deployment Options
+
+### Vercel (Recommended)
+
+Vercel is the recommended platform for deploying Next.js applications, offering zero-config deployment.
+
+<Steps>
+  <Step title="Install Vercel CLI">
+    Install the Vercel CLI globally:
+    
+    ```bash
+    npm install -g vercel
+    ```
+  </Step>
+  
+  <Step title="Login to Vercel">
+    Authenticate with your Vercel account:
+    
+    ```bash
+    vercel login
+    ```
+  </Step>
+  
+  <Step title="Deploy">
+    Deploy your application:
+    
+    ```bash
+    vercel
+    ```
+    
+    Follow the prompts to:
+    - Link to an existing project or create a new one
+    - Confirm project settings
+    - Deploy to preview environment
+  </Step>
+  
+  <Step title="Configure Environment Variables">
+    Add your production environment variables:
+    
+    **Via CLI:**
+    ```bash
+    vercel env add MONGODB_URI production
+    vercel env add CLERK_SECRET_KEY production
+    # Add all other environment variables
+    ```
+    
+    **Via Dashboard:**
+    1. Go to [Vercel Dashboard](https://vercel.com/dashboard)
+    2. Select your project
+    3. Go to **Settings** → **Environment Variables**
+    4. Add each variable from your `.env.local`
+    5. Set environment to **Production**
+  </Step>
+  
+  <Step title="Deploy to Production">
+    Deploy to production:
+    
+    ```bash
+    vercel --prod
+    ```
+    
+    Your application will be live at `https://your-project.vercel.app`
+  </Step>
+  
+  <Step title="Configure Custom Domain (Optional)">
+    Add a custom domain:
+    
+    1. Go to **Settings** → **Domains**
+    2. Click **Add Domain**
+    3. Enter your domain name
+    4. Follow DNS configuration instructions
+    5. Update Clerk URLs to use your custom domain
+  </Step>
+</Steps>
+
+#### Vercel Configuration
+
+Subflow works with default Vercel settings, but you can customize with `vercel.json`:
+
+```json
+{
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "regions": ["iad1"],
+  "env": {
+    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "@clerk-publishable-key",
+    "CLERK_SECRET_KEY": "@clerk-secret-key"
+  }
+}
+```
+
+<Info>
+  **Automatic Deployments**: Connect your GitHub repository to Vercel for automatic deployments on every push.
+</Info>
+
+### Docker
+
+Deploy Subflow using Docker for containerized deployment.
+
+<Steps>
+  <Step title="Create Dockerfile">
+    Create a `Dockerfile` in your project root:
+    
+    ```dockerfile
+    FROM node:20-alpine AS base
+    
+    # Install dependencies only when needed
+    FROM base AS deps
+    RUN apk add --no-cache libc6-compat
+    WORKDIR /app
+    
+    # Copy package files
+    COPY package.json package-lock.json* ./
+    RUN npm ci
+    
+    # Rebuild the source code only when needed
+    FROM base AS builder
+    WORKDIR /app
+    COPY --from=deps /app/node_modules ./node_modules
+    COPY . .
+    
+    # Set environment variables for build
+    ENV NEXT_TELEMETRY_DISABLED 1
+    
+    # Build the application
+    RUN npm run build
+    
+    # Production image
+    FROM base AS runner
+    WORKDIR /app
+    
+    ENV NODE_ENV production
+    ENV NEXT_TELEMETRY_DISABLED 1
+    
+    # Create user and group
+    RUN addgroup --system --gid 1001 nodejs
+    RUN adduser --system --uid 1001 nextjs
+    
+    # Copy necessary files
+    COPY --from=builder /app/public ./public
+    COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+    COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+    
+    USER nextjs
+    
+    EXPOSE 3000
+    
+    ENV PORT 3000
+    ENV HOSTNAME "0.0.0.0"
+    
+    CMD ["node", "server.js"]
+    ```
+  </Step>
+  
+  <Step title="Update next.config.ts">
+    Enable standalone output in `next.config.ts`:
+    
+    ```typescript
+    import { NextConfig } from "next";
+    import createNextIntlPlugin from "next-intl/plugin";
+    
+    const nextConfig: NextConfig = {
+        output: 'standalone',
+        experimental: {
+            serverActions: {
+                bodySizeLimit: "10mb",
+            },
+        },
+    };
+    
+    const withNextIntl = createNextIntlPlugin();
+    export default withNextIntl(nextConfig);
+    ```
+  </Step>
+  
+  <Step title="Create .dockerignore">
+    Create a `.dockerignore` file:
+    
+    ```plaintext
+    Dockerfile
+    .dockerignore
+    node_modules
+    npm-debug.log
+    .next
+    .git
+    .gitignore
+    README.md
+    .env.local
+    .env*.local
+    .vercel
+    ```
+  </Step>
+  
+  <Step title="Build Docker Image">
+    Build the Docker image:
+    
+    ```bash
+    docker build -t subflow:latest .
+    ```
+  </Step>
+  
+  <Step title="Run Container">
+    Run the container with environment variables:
+    
+    ```bash
+    docker run -d \
+      --name subflow \
+      -p 3000:3000 \
+      -e NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_xxx" \
+      -e CLERK_SECRET_KEY="sk_xxx" \
+      -e CLERK_WEBHOOK_SIGNING_SECRET="whsec_xxx" \
+      -e MONGODB_URI="mongodb://..." \
+      -e EXCHANGERATE_HOST_API_KEY="your_key" \
+      -e NEXT_PUBLIC_CLERK_SIGN_IN_URL="/login" \
+      -e NEXT_PUBLIC_CLERK_SIGN_IN_FORCE_REDIRECT_URL="/subscription" \
+      -e NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL="/subscription" \
+      subflow:latest
+    ```
+    
+    Or use an environment file:
+    ```bash
+    docker run -d \
+      --name subflow \
+      -p 3000:3000 \
+      --env-file .env.production \
+      subflow:latest
+    ```
+  </Step>
+</Steps>
+
+#### Docker Compose
+
+For easier management, use Docker Compose. Create `docker-compose.yml`:
+
+```yaml
+version: '3.8'
+
+services:
+  subflow:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.production
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+  
+  mongodb:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
+```
+
+Run with:
+```bash
+docker-compose up -d
+```
+
+### Railway
+
+Deploy to Railway with automatic GitHub integration.
+
+<Steps>
+  <Step title="Create Railway Account">
+    Sign up at [Railway.app](https://railway.app)
+  </Step>
+  
+  <Step title="Create New Project">
+    1. Click **New Project**
+    2. Select **Deploy from GitHub repo**
+    3. Authorize Railway to access your repository
+    4. Select your Subflow repository
+  </Step>
+  
+  <Step title="Add MongoDB">
+    1. Click **New** in your project
+    2. Select **Database** → **MongoDB**
+    3. Railway will provision a MongoDB instance
+    4. Copy the connection string from the **Connect** tab
+  </Step>
+  
+  <Step title="Configure Environment Variables">
+    1. Select your Subflow service
+    2. Go to **Variables** tab
+    3. Add all environment variables
+    4. Use the MongoDB connection string from Railway
+  </Step>
+  
+  <Step title="Deploy">
+    Railway automatically deploys on push. Your app will be available at `https://your-app.railway.app`
+  </Step>
+  
+  <Step title="Custom Domain (Optional)">
+    1. Go to **Settings** → **Domains**
+    2. Click **Generate Domain** or add custom domain
+    3. Update Clerk URLs with your new domain
+  </Step>
+</Steps>
+
+### DigitalOcean App Platform
+
+Deploy to DigitalOcean's managed platform.
+
+<Steps>
+  <Step title="Create App">
+    1. Log in to [DigitalOcean](https://cloud.digitalocean.com)
+    2. Go to **Apps** → **Create App**
+    3. Connect your GitHub repository
+    4. Select your Subflow repository and branch
+  </Step>
+  
+  <Step title="Configure Build Settings">
+    - **Build Command**: `npm run build`
+    - **Run Command**: `npm start`
+    - **HTTP Port**: `3000`
+  </Step>
+  
+  <Step title="Add MongoDB">
+    1. Click **Add Resource** → **Database**
+    2. Select **MongoDB**
+    3. Choose a plan and configure
+    4. Connection string will be available in environment variables
+  </Step>
+  
+  <Step title="Set Environment Variables">
+    1. Go to **App Settings** → **Environment Variables**
+    2. Add all required variables
+    3. Use `${db.DATABASE_URL}` for MongoDB connection
+  </Step>
+  
+  <Step title="Deploy">
+    Click **Create Resources** to deploy. App will be available at `https://your-app.ondigitalocean.app`
+  </Step>
+</Steps>
+
+### Render
+
+Deploy to Render with automatic deploys and managed services.
+
+<Steps>
+  <Step title="Create Web Service">
+    1. Sign up at [Render](https://render.com)
+    2. Click **New** → **Web Service**
+    3. Connect your GitHub repository
+    4. Select your Subflow repository
+  </Step>
+  
+  <Step title="Configure Service">
+    - **Name**: subflow
+    - **Environment**: Node
+    - **Build Command**: `npm install && npm run build`
+    - **Start Command**: `npm start`
+    - **Plan**: Choose appropriate tier
+  </Step>
+  
+  <Step title="Add Environment Variables">
+    1. Scroll to **Environment Variables**
+    2. Click **Add Environment Variable**
+    3. Add all required variables
+  </Step>
+  
+  <Step title="Deploy">
+    Click **Create Web Service**. Render will build and deploy automatically.
+  </Step>
+</Steps>
+
+### VPS (Self-Hosted)
+
+Deploy to your own Virtual Private Server.
+
+<Steps>
+  <Step title="Prepare Server">
+    Set up a VPS with Ubuntu 22.04 or later:
+    
+    ```bash
+    # Update system
+    sudo apt update && sudo apt upgrade -y
+    
+    # Install Node.js 20
+    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+    sudo apt install -y nodejs
+    
+    # Install PM2 for process management
+    sudo npm install -g pm2
+    
+    # Install Nginx for reverse proxy
+    sudo apt install -y nginx
+    ```
+  </Step>
+  
+  <Step title="Clone and Build">
+    ```bash
+    # Clone repository
+    git clone https://github.com/yourusername/subflow.git
+    cd subflow
+    
+    # Install dependencies
+    npm install
+    
+    # Create environment file
+    nano .env.production
+    # Add all environment variables
+    
+    # Build application
+    npm run build
+    ```
+  </Step>
+  
+  <Step title="Start with PM2">
+    ```bash
+    # Start application
+    pm2 start npm --name "subflow" -- start
+    
+    # Save PM2 configuration
+    pm2 save
+    
+    # Set up PM2 to start on boot
+    pm2 startup
+    ```
+  </Step>
+  
+  <Step title="Configure Nginx">
+    Create Nginx configuration:
+    
+    ```bash
+    sudo nano /etc/nginx/sites-available/subflow
+    ```
+    
+    Add configuration:
+    ```nginx
+    server {
+        listen 80;
+        server_name yourdomain.com;
+        
+        location / {
+            proxy_pass http://localhost:3000;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection 'upgrade';
+            proxy_set_header Host $host;
+            proxy_cache_bypass $http_upgrade;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
+    ```
+    
+    Enable site:
+    ```bash
+    sudo ln -s /etc/nginx/sites-available/subflow /etc/nginx/sites-enabled/
+    sudo nginx -t
+    sudo systemctl restart nginx
+    ```
+  </Step>
+  
+  <Step title="Set Up SSL with Let's Encrypt">
+    ```bash
+    # Install Certbot
+    sudo apt install -y certbot python3-certbot-nginx
+    
+    # Obtain SSL certificate
+    sudo certbot --nginx -d yourdomain.com
+    
+    # Auto-renewal is set up automatically
+    ```
+  </Step>
+</Steps>
+
+## Post-Deployment
+
+### Verify Deployment
+
+After deployment, verify everything is working:
+
+<Tabs>
+  <Tab title="Health Checks">
+    - [ ] Application loads successfully
+    - [ ] Authentication works (sign up/sign in)
+    - [ ] Database connection is stable
+    - [ ] API endpoints respond correctly
+    - [ ] Static assets load properly
+  </Tab>
+  
+  <Tab title="Feature Testing">
+    - [ ] Add a subscription
+    - [ ] Edit subscription details
+    - [ ] View calendar
+    - [ ] Check analytics
+    - [ ] Test currency conversion
+    - [ ] Verify email notifications (if configured)
+    - [ ] Test Smart Add Subscription (if configured)
+  </Tab>
+  
+  <Tab title="Security">
+    - [ ] HTTPS is enabled
+    - [ ] Environment variables are secure
+    - [ ] Database access is restricted
+    - [ ] Clerk webhooks are configured
+    - [ ] API keys are production keys
+  </Tab>
+</Tabs>
+
+### Configure Webhooks
+
+<Warning>
+  Ensure your Clerk webhook endpoint is accessible from the internet for proper user deletion handling.
+</Warning>
+
+1. Go to [Clerk Dashboard](https://dashboard.clerk.com)
+2. Navigate to **Webhooks**
+3. Update webhook URL to your production domain:
+   ```
+   https://yourdomain.com/api/webhooks
+   ```
+4. Ensure `user.deleted` event is selected
+5. Copy the new signing secret
+6. Update `CLERK_WEBHOOK_SIGNING_SECRET` in production environment
+
+### Monitoring and Logging
+
+<Tabs>
+  <Tab title="Vercel">
+    - **Logs**: Dashboard → Project → Logs
+    - **Analytics**: Dashboard → Project → Analytics
+    - **Real User Monitoring**: Available on Pro plan
+    - **Integrations**: Add monitoring tools via integrations
+  </Tab>
+  
+  <Tab title="Docker">
+    View logs:
+    ```bash
+    docker logs subflow
+    docker logs -f subflow  # Follow logs
+    ```
+    
+    Monitor resources:
+    ```bash
+    docker stats subflow
+    ```
+  </Tab>
+  
+  <Tab title="PM2">
+    Monitor application:
+    ```bash
+    pm2 monit
+    pm2 logs subflow
+    pm2 status
+    ```
+    
+    View detailed metrics:
+    ```bash
+    pm2 show subflow
+    ```
+  </Tab>
+</Tabs>
+
+### Scaling
+
+<CardGroup cols={2}>
+  <Card title="Vercel" icon="triangle">
+    - Automatic scaling included
+    - Upgrade to Pro for better limits
+    - Add custom regions
+    - Enable Edge Functions
+  </Card>
+  
+  <Card title="Docker" icon="docker">
+    - Use container orchestration (Kubernetes)
+    - Set up load balancing
+    - Implement horizontal scaling
+    - Add Redis for session storage
+  </Card>
+  
+  <Card title="Database" icon="database">
+    - Upgrade MongoDB plan
+    - Enable replica sets
+    - Add read replicas
+    - Implement caching layer
+  </Card>
+  
+  <Card title="CDN" icon="globe">
+    - Use Vercel's built-in CDN
+    - Add Cloudflare
+    - Optimize images
+    - Cache static assets
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+### Build Failures
+
+- **Missing Dependencies**: Run `npm install` and commit `package-lock.json`
+- **Environment Variables**: Ensure all required variables are set
+- **TypeScript Errors**: Run `npm run lint` locally first
+- **Memory Issues**: Increase build memory limit or upgrade plan
+
+### Runtime Errors
+
+- **Database Connection**: Verify MongoDB URI and network access
+- **Authentication**: Check Clerk keys and webhook configuration
+- **API Errors**: Review logs for specific error messages
+- **Performance**: Monitor resource usage and optimize queries
+
+### SSL/HTTPS Issues
+
+- **Certificate Errors**: Verify DNS is properly configured
+- **Mixed Content**: Ensure all resources use HTTPS
+- **Redirect Loops**: Check Clerk URL configuration
+- **Certificate Renewal**: Automate with Certbot
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Security" icon="shield-halved">
+    - Use environment variables for secrets
+    - Enable HTTPS/SSL certificates
+    - Implement rate limiting
+    - Regular security updates
+  </Card>
+  
+  <Card title="Performance" icon="gauge-high">
+    - Enable caching strategies
+    - Optimize images and assets
+    - Use CDN for static content
+    - Monitor response times
+  </Card>
+  
+  <Card title="Reliability" icon="check-double">
+    - Set up health checks
+    - Implement error tracking
+    - Configure automatic backups
+    - Use staging environment
+  </Card>
+  
+  <Card title="Maintenance" icon="wrench">
+    - Keep dependencies updated
+    - Monitor application logs
+    - Review performance metrics
+    - Plan for scaling needs
+  </Card>
+</CardGroup>

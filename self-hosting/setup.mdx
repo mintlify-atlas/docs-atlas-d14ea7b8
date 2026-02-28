@@ -1,0 +1,190 @@
+---
+title: Self-Hosting Setup
+description: Prerequisites and initial setup for self-hosting Subflow
+---
+
+## Prerequisites
+
+Before you begin self-hosting Subflow, ensure you have the following:
+
+### Required Software
+
+- **Node.js**: Version 18.0 or higher
+- **npm** or **yarn**: Latest version
+- **MongoDB**: Version 5.0 or higher (local or cloud instance)
+- **Git**: For cloning the repository
+
+### Required Services
+
+<Steps>
+  <Step title="Clerk Account">
+    Sign up for a [Clerk](https://clerk.com) account for authentication. You'll need:
+    - A Clerk application
+    - API keys (publishable and secret)
+    - Webhook signing secret (for user deletion events)
+  </Step>
+  
+  <Step title="MongoDB Database">
+    Set up a MongoDB database either:
+    - Self-hosted MongoDB instance
+    - [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) (free tier available)
+    - Any MongoDB-compatible service
+  </Step>
+  
+  <Step title="ExchangeRate-API Key">
+    Register at [ExchangeRate-API](https://www.exchangerate-api.com/) to get an API key for currency conversion features.
+  </Step>
+  
+  <Step title="AI Provider (Optional)">
+    For the Smart Add Subscription feature, you'll need one of:
+    - [Zeabur AI Hub](https://zeabur.com) account with AI API access
+    - [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) credentials
+    - Any compatible AI provider that supports the Vercel AI SDK
+  </Step>
+  
+  <Step title="Email Service (Optional)">
+    For email notifications, you'll need:
+    - [Zeabur Email](https://zeabur.com) service or
+    - Any SMTP-compatible email service
+  </Step>
+</Steps>
+
+## Initial Setup
+
+<Steps>
+  <Step title="Clone the Repository">
+    Clone the Subflow repository from GitHub:
+    
+    ```bash
+    git clone https://github.com/yourusername/subflow.git
+    cd subflow
+    ```
+  </Step>
+  
+  <Step title="Install Dependencies">
+    Install all required dependencies using npm or yarn:
+    
+    ```bash
+    npm install
+    # or
+    yarn install
+    ```
+  </Step>
+  
+  <Step title="Configure Environment Variables">
+    Create a `.env.local` file in the root directory:
+    
+    ```bash
+    cp .env.example .env.local
+    ```
+    
+    Then configure all required environment variables. See the [Environment Variables](/self-hosting/environment-variables) page for detailed documentation.
+  </Step>
+  
+  <Step title="Set Up Clerk">
+    1. Go to your [Clerk Dashboard](https://dashboard.clerk.com)
+    2. Create a new application or select an existing one
+    3. Copy your Publishable Key and Secret Key
+    4. Add them to your `.env.local` file
+    5. Configure the sign-in and sign-up URLs
+  </Step>
+  
+  <Step title="Configure MongoDB">
+    Set up your MongoDB connection:
+    
+    ```bash
+    MONGODB_URI=mongodb://localhost:27017
+    # or for MongoDB Atlas:
+    MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority
+    ```
+    
+    Subflow will automatically create a database named `subflow` with the required collections. See [Database Setup](/self-hosting/database-setup) for details.
+  </Step>
+  
+  <Step title="Set Up Clerk Webhooks">
+    Configure webhooks for user deletion:
+    
+    1. In your Clerk Dashboard, go to **Webhooks**
+    2. Click **Add Endpoint**
+    3. Set the endpoint URL to: `https://your-domain.com/api/webhooks`
+    4. Select the `user.deleted` event
+    5. Copy the signing secret and add it to `.env.local`:
+    
+    ```bash
+    CLERK_WEBHOOK_SIGNING_SECRET=whsec_xxxxxxxxxxxxx
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+  **Security Note**: Never commit your `.env.local` file to version control. It contains sensitive credentials that should remain private.
+</Warning>
+
+## Verify Installation
+
+After completing the setup, verify everything is working:
+
+<Steps>
+  <Step title="Run Development Server">
+    Start the development server:
+    
+    ```bash
+    npm run dev
+    ```
+    
+    The application should be available at `http://localhost:3000`
+  </Step>
+  
+  <Step title="Test Authentication">
+    1. Navigate to `http://localhost:3000/login`
+    2. Create a test account or sign in
+    3. Verify you're redirected to the subscription dashboard
+  </Step>
+  
+  <Step title="Test Database Connection">
+    After signing in, try adding a test subscription. This will verify:
+    - MongoDB connection is working
+    - Database schema is properly initialized
+    - User data is being stored correctly
+  </Step>
+</Steps>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Environment Variables" icon="gear" href="/self-hosting/environment-variables">
+    Complete reference for all environment variables
+  </Card>
+  <Card title="Database Setup" icon="database" href="/self-hosting/database-setup">
+    MongoDB configuration and schema details
+  </Card>
+  <Card title="Deployment" icon="rocket" href="/self-hosting/deployment">
+    Deploy to production on Vercel, Docker, or other platforms
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+### Port Already in Use
+
+If port 3000 is already in use, you can change it:
+
+```bash
+PORT=3001 npm run dev
+```
+
+### MongoDB Connection Failed
+
+Verify your MongoDB URI:
+- Check that MongoDB is running (if local)
+- Verify credentials are correct
+- Ensure network access is allowed (for cloud databases)
+- Check firewall settings
+
+### Clerk Authentication Issues
+
+If authentication isn't working:
+- Verify all Clerk environment variables are set
+- Check that URLs in Clerk Dashboard match your setup
+- Ensure webhook endpoint is accessible (for webhooks)
+- Review Clerk Dashboard logs for errors

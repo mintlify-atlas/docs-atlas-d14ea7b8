@@ -1,0 +1,206 @@
+---
+title: Email Notifications
+description: Set up email reminders for upcoming subscription payments and renewal dates
+---
+
+Subflow's email notification system sends you reminders before subscription payments are due, helping you stay on top of your recurring expenses.
+
+## How Email Notifications Work
+
+When enabled, Subflow sends you:
+
+- **Payment reminders** before your subscription renewal dates
+- **Upcoming payment summaries** showing what you'll be charged for
+- **Welcome emails** when you first set up notifications, introducing key features
+
+All emails are sent in your chosen language with beautifully formatted templates.
+
+## Setting Up Email Notifications
+
+<Steps>
+  <Step title="Open More Settings Menu">
+    On the subscription management page, click the **More Settings** button (three dots icon) in the top navigation.
+  </Step>
+  
+  <Step title="Select Email Notification">
+    Choose **Email Notification** from the menu options.
+  </Step>
+  
+  <Step title="Enable Notifications">
+    Toggle the **Notify** switch to enable email notifications.
+  </Step>
+  
+  <Step title="Enter Your Email Address">
+    Provide the email address where you want to receive notifications. This can be different from your account email.
+  </Step>
+  
+  <Step title="Choose Email Language">
+    Select your preferred language for email notifications:
+    - English (en)
+    - Chinese (zh)
+    - Japanese (ja)
+    - Spanish (es)
+  </Step>
+  
+  <Step title="Save Settings">
+    Click **Save Settings** to activate your email notifications.
+  </Step>
+</Steps>
+
+<Note>
+Your notification email address, language preference, and notification status are securely stored in the database and linked to your user account.
+</Note>
+
+## Email Data Model
+
+Your email notification settings are stored with the following information:
+
+- **Email address**: Where notifications are sent
+- **Language**: The language for email content (en, zh, ja, or es)
+- **Notify status**: Whether notifications are enabled or disabled
+- **User ID**: Links settings to your account
+- **Timestamps**: When settings were created and last updated
+
+## Email Template Features
+
+Subflow's notification emails include:
+
+### Welcome Email
+
+When you first enable notifications, you'll receive a welcome email featuring:
+
+- **Feature highlights**: Smart Add, Email Notifications, Subscription Analytics, and Co-Subscribers
+- **Usage instructions**: Step-by-step guidance for each feature
+- **Quick start guide**: Basic operations like adding subscriptions, switching months, and viewing analytics
+- **Screenshots**: Visual examples in your selected language
+
+### Payment Reminder Emails
+
+Regular notification emails show:
+
+- Upcoming subscription charges
+- Payment dates and amounts
+- Subscription names and services
+- Total monthly spend summary
+
+## Managing Your Email Settings
+
+### Updating Your Email Address
+
+<Steps>
+  <Step title="Return to Email Notification Settings">
+    Click **More Settings** → **Email Notification**.
+  </Step>
+  
+  <Step title="Update Email Field">
+    Enter your new email address in the email input field.
+  </Step>
+  
+  <Step title="Save Changes">
+    Click **Save Settings** to update your notification email.
+  </Step>
+</Steps>
+
+### Changing Email Language
+
+You can change the language of your notification emails at any time:
+
+1. Open **Email Notification** settings
+2. Select a different language from the **Email Language** dropdown
+3. Click **Save Settings**
+
+All future emails will be sent in the newly selected language.
+
+### Disabling Notifications
+
+To stop receiving email notifications:
+
+<Steps>
+  <Step title="Open Email Settings">
+    Navigate to **More Settings** → **Email Notification**.
+  </Step>
+  
+  <Step title="Turn Off Notify">
+    Toggle the **Notify** switch to the off position.
+  </Step>
+  
+  <Step title="Save">
+    Click **Save Settings** to disable notifications.
+  </Step>
+</Steps>
+
+<Tip>
+Your email address and language preferences are preserved even when notifications are disabled, so you can easily re-enable them later without re-entering your information.
+</Tip>
+
+## Email Validation
+
+Subflow validates your email address to ensure notifications are delivered successfully:
+
+- Email must be in a valid format (e.g., `user@example.com`)
+- Invalid email addresses will show an error message
+- You must provide an email address when notifications are enabled
+
+## Technical Details
+
+### Database Storage
+
+Email settings are stored in the `emails` collection with:
+
+- **Unique constraint**: One email setting per user (indexed on `userId`)
+- **Required fields**: `userId`, `language`, and `notify` status
+- **Optional field**: `email` (required only when notifications are enabled)
+- **Automatic timestamps**: Created and updated times are tracked
+
+### Upsert Functionality
+
+The email settings system uses an "upsert" operation:
+
+- If settings exist for your account, they are **updated**
+- If no settings exist, they are **created**
+- This ensures seamless updates without duplicate records
+
+Implemented in `upsertEmail` function at `app/actions/action.ts:327`.
+
+## Email Content Customization
+
+Email templates are fully localized with:
+
+- **Subject lines** in your chosen language
+- **Hero images** specific to each language
+- **Feature descriptions** translated and culturally adapted
+- **Icons and visual elements** that enhance readability
+- **Responsive design** that works on desktop and mobile devices
+
+Template rendering is handled by `components/email/template.tsx` using React Email components.
+
+## Best Practices
+
+<Tip>
+**Use a regularly checked email**: Choose an email address you check frequently to ensure you don't miss payment reminders.
+</Tip>
+
+<Tip>
+**Match your preferred language**: Select the language you're most comfortable with to make notification emails easier to read and act upon.
+</Tip>
+
+<Tip>
+**Whitelist Subflow emails**: Add Subflow's notification email to your contacts or safe senders list to prevent emails from going to spam.
+</Tip>
+
+## Troubleshooting
+
+**Not receiving emails?**
+- Check your spam/junk folder
+- Verify your email address is correct in settings
+- Ensure the **Notify** toggle is enabled
+- Confirm your email provider isn't blocking Subflow emails
+
+**Emails in wrong language?**
+- Open Email Notification settings and verify the **Email Language** selection
+- Save settings again to ensure the change is applied
+
+**Settings not saving?**
+- Check your internet connection
+- Try logging out and logging back in
+- Ensure you have proper authentication permissions

@@ -1,0 +1,135 @@
+---
+title: Multi-Language & Currency Support
+description: Learn how to switch languages and manage multi-currency subscriptions in Subflow
+---
+
+Subflow supports multiple languages and currencies, allowing you to track subscriptions in your preferred language and manage costs across different currencies.
+
+## Supported Languages
+
+Subflow is available in four languages:
+
+- **English (en)** - Default
+- **Chinese (zh)** - Traditional Chinese
+- **Japanese (ja)**
+- **Spanish (es)**
+
+## Changing Your Language
+
+Your language preference is automatically stored in a cookie called `subflow-locale` for 30 days.
+
+<Steps>
+  <Step title="Access Language Settings">
+    The language is typically set during your first visit or can be changed through your browser settings. Subflow detects your preferred language automatically.
+  </Step>
+  
+  <Step title="Language Persists Across Sessions">
+    Once set, your language preference is saved and will persist across all your devices when you log in.
+  </Step>
+</Steps>
+
+<Note>
+The language setting affects the entire interface, including calendar labels, button text, and notification messages.
+</Note>
+
+## Currency Management
+
+### Available Currencies
+
+Subflow supports **all major global currencies** through integration with the ExchangeRate.host API. You can track subscriptions in any currency that matters to you.
+
+### Setting Your Preferred Currency
+
+<Steps>
+  <Step title="Open Currency Selector">
+    Your currency preference is stored in your browser's local storage and syncs across sessions.
+  </Step>
+  
+  <Step title="Choose Your Currency">
+    Select from the comprehensive list of available currencies. The default currency is **USD**.
+  </Step>
+  
+  <Step title="Currency Persists Locally">
+    Your selected currency is saved to `localStorage` and will be remembered on the same device.
+  </Step>
+</Steps>
+
+### Multi-Currency Subscriptions
+
+You can add subscriptions in **different currencies**:
+
+- Each subscription can have its own currency
+- When adding a subscription, select the currency from the dropdown
+- The currency is stored with each subscription record
+- Exchange rates are updated every 24 hours for accurate conversion
+
+<Tip>
+If you share subscriptions with co-subscribers, each person can split costs in their own currency. See the [Co-Subscribers guide](/guide/co-subscribers) for more details.
+</Tip>
+
+## How Currency Data is Managed
+
+### Exchange Rate Updates
+
+- **Currency list**: Refreshed every 7 days
+- **Live exchange rates**: Updated every 24 hours
+- Exchange rate data comes from ExchangeRate.host API
+
+### Technical Details
+
+The currency system works as follows:
+
+1. **Currency List** (`getCurrenciesList`): Fetches all available currencies with a 7-day cache
+2. **Live Rates** (`getCurrenciesLive`): Fetches current exchange rates with a 24-hour cache
+3. **Local Storage**: Your preferred currency is stored in `localStorage` under the key `currency`
+
+<Note>
+Currency data is cached to improve performance and reduce API calls. The cache is automatically refreshed based on the revalidation period.
+</Note>
+
+## Language-Specific Features
+
+### Email Notifications
+
+When you set up email notifications, you can choose the language for your notification emails:
+
+- English
+- Chinese (Traditional)
+- Japanese
+- Spanish
+
+The email content, including subscription reminders and payment notifications, will be sent in your chosen language.
+
+See the [Email Notifications guide](/guide/email-notifications) for setup instructions.
+
+### Date and Number Formatting
+
+Subflow automatically formats dates and numbers according to your selected language:
+
+- Date formats adapt to local conventions
+- Number separators (commas, periods) match language standards
+- Currency symbols display correctly based on the selected currency
+
+## Best Practices
+
+<Tip>
+**For Multi-Currency Users**: If you have subscriptions in multiple currencies, consider setting your preferred display currency to your primary banking currency for easier expense tracking.
+</Tip>
+
+<Tip>
+**For International Teams**: When sharing subscriptions with co-subscribers in different countries, each person can view costs in their own currency while the original subscription maintains its native currency.
+</Tip>
+
+## Troubleshooting
+
+**Language not changing?**
+- Clear your browser cookies and reload the page
+- Check that the `subflow-locale` cookie is being set correctly
+
+**Currency not saving?**
+- Ensure your browser allows local storage
+- Check that you're not in private/incognito mode, which may clear local storage on exit
+
+**Exchange rates seem outdated?**
+- Exchange rates are cached for 24 hours for performance
+- The cache will automatically refresh after this period

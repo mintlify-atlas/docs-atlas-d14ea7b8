@@ -1,0 +1,359 @@
+---
+title: Cloud Sync
+description: Understand how Subflow syncs your subscription data across all your devices using MongoDB cloud storage
+---
+
+Subflow uses cloud-based data synchronization to ensure your subscription information is always up-to-date, no matter which device you use.
+
+## How Cloud Sync Works
+
+### Automatic Synchronization
+
+When you log into Subflow:
+
+1. **Authentication**: Your identity is verified through Clerk authentication
+2. **Data Retrieval**: All your subscriptions are fetched from the cloud database
+3. **Real-Time Updates**: Changes you make are immediately saved to the cloud
+4. **Cross-Device Access**: Your data is accessible from any device where you log in
+
+There's nothing to configure - cloud sync works automatically from the moment you create your account.
+
+## What Gets Synced?
+
+Subflow synchronizes all your subscription-related data:
+
+### Subscriptions
+
+- Subscription name and service
+- Price and currency
+- Start date and payment cycle
+- Co-subscriber information
+- All metadata (creation and update timestamps)
+
+### Email Settings
+
+- Notification email address
+- Email language preference
+- Notification enabled/disabled status
+
+### Preferences
+
+- Yearly subscription amortization settings
+- Display preferences
+- Other user-specific configurations
+
+<Note>
+Your preferred currency and UI language are stored **locally** in your browser's localStorage for faster access, but your subscription data and settings are always in the cloud.
+</Note>
+
+## Cloud Database Architecture
+
+### MongoDB Connection
+
+Subflow uses MongoDB as its cloud database with:
+
+- **Database name**: `subflow`
+- **Connection pooling**: Reuses connections for performance
+- **Automatic reconnection**: Handles network interruptions gracefully
+
+Implemented in `lib/mongodb.ts:3`.
+
+### Collections
+
+Your data is organized into three main collections:
+
+#### 1. Subscriptions Collection
+
+Stores all subscription records with:
+
+- `userId`: Links subscriptions to your account
+- `name`, `price`, `currency`: Subscription details
+- `startDate`: When the subscription begins
+- `paymentCycle`: Monthly or yearly
+- `serviceId`: Reference to subscription service (optional)
+- `coSubscribers`: Array of people sharing the subscription
+- `timestamps`: Automatically tracked creation and update times
+
+Defined in `models/Subscription.ts`.
+
+#### 2. Emails Collection
+
+Stores notification settings with:
+
+- `userId`: Unique per user
+- `email`: Notification email address
+- `language`: Email language (en, zh, ja, or es)
+- `notify`: Boolean for notification status
+- `timestamps`: Creation and update times
+
+Defined in `models/Email.ts`.
+
+#### 3. Preferences Collection
+
+Stores user preferences with:
+
+- `userId`: Unique per user
+- `notAmortizeYearlySubscriptions`: Whether to amortize yearly costs
+- `timestamps`: Creation and update times
+
+Defined in `models/Preferences.ts`.
+
+## Data Persistence
+
+### Database Connection Management
+
+Subflow maintains database connections efficiently:
+
+```typescript
+let db: mongoose.Connection | null = null;
+
+export const connectToDatabase = async () => {
+  if (!db || mongoose.connection.readyState === 0) {
+    await mongoose.connect(process.env.MONGODB_URI);
+    db = mongoose.connection.useDb("subflow");
+  }
+  return db;
+};
+```
+
+This approach:
+
+- **Reuses connections** when available
+- **Reconnects automatically** if the connection is closed
+- **Optimizes performance** by avoiding unnecessary reconnections
+
+### Write Operations
+
+When you create or update data:
+
+<Steps>
+  <Step title="User Action">
+    You add, edit, or delete a subscription through the UI.
+  </Step>
+  
+  <Step title="Authentication Check">
+    Subflow verifies you're logged in and authorized.
+  </Step>
+  
+  <Step title="Database Connection">
+    A connection to MongoDB is established or reused.
+  </Step>
+  
+  <Step title="Data Operation">
+    The operation (create, update, delete) is executed on the cloud database.
+  </Step>
+  
+  <Step title="Confirmation">
+    You receive a success message, and the UI updates immediately.
+  </Step>
+</Steps>
+
+### Read Operations
+
+When you view your subscriptions:
+
+1. **Authentication**: Your user ID is retrieved from your session
+2. **Query**: Database is queried for subscriptions where:
+   - You're the owner (`userId` matches), OR
+   - You're a confirmed co-subscriber
+3. **Data Return**: All matching subscriptions are returned and displayed
+
+Implemented in `app/actions/action.ts:37`.
+
+## Security
+
+### Authentication Requirements
+
+All database operations require authentication:
+
+- Every action checks for a valid user session
+- Unauthorized requests are rejected with an error
+- User IDs from authenticated sessions ensure data isolation
+
+Implemented via `requireAuth()` function at `app/actions/action.ts:10`.
+
+### Data Isolation
+
+Your data is protected through:
+
+- **User ID filtering**: Queries only return data belonging to you
+- **Co-subscriber verification**: Email addresses must match authenticated users
+- **Unique constraints**: Prevent duplicate records per user
+
+### Indexes for Performance and Security
+
+Database indexes ensure:
+
+- **Fast queries**: Indexed on `userId` for quick lookups
+- **Data integrity**: Unique constraints on user-specific settings
+- **Efficient co-subscriber queries**: Indexed on email and confirmation status
+
+## Data Consistency
+
+### Timestamps
+
+All records include automatic timestamps:
+
+- `createdAt`: When the record was first created
+- `updatedAt`: When the record was last modified
+
+These are managed automatically by MongoDB's schema and help track data history.
+
+### Transaction Safety
+
+Subflow uses atomic operations to ensure:
+
+- Updates complete fully or not at all
+- No partial data corruption
+- Consistent state across all fields
+
+## Cross-Device Synchronization
+
+### How It Works
+
+1. **Device A**: You add a subscription on your laptop
+2. **Cloud Storage**: The subscription is saved to MongoDB
+3. **Device B**: You open Subflow on your phone
+4. **Data Sync**: Your phone fetches the latest data, including the new subscription
+5. **Always Current**: Both devices show the same data
+
+### Real-Time Updates
+
+- Changes are saved immediately upon confirmation
+- Refreshing the page or logging in pulls the latest data
+- No manual sync required
+
+<Tip>
+If you make changes on multiple devices simultaneously, the last saved change wins. MongoDB timestamps help track when each change occurred.
+</Tip>
+
+## Handling Co-Subscriber Data
+
+### Shared Subscription Sync
+
+When subscriptions are shared:
+
+- **Owner's view**: Shows all co-subscribers and their status
+- **Co-subscriber's view**: Shows the subscription with "Co Subscription" indicator
+- **Invitation changes**: Accepting or rejecting updates the cloud immediately
+- **Permissions**: Only the owner can edit subscription details
+
+This ensures everyone sees consistent information about shared subscriptions.
+
+## Offline Behavior
+
+### What Happens Offline?
+
+Subflow requires an internet connection to:
+
+- Fetch subscription data from the cloud
+- Save new subscriptions or changes
+- Accept or reject co-subscriber invitations
+
+**Without internet**:
+
+- You won't see the latest updates from other devices
+- Changes you attempt will fail to save
+- Error messages will indicate connection issues
+
+### Reconnection
+
+When your connection is restored:
+
+1. Refresh the page to fetch the latest data
+2. Re-attempt any failed operations
+3. Your data will sync automatically
+
+<Note>
+Subflow does not currently support offline mode or local-first data storage. An active internet connection is required for all operations.
+</Note>
+
+## Performance Optimization
+
+### Connection Pooling
+
+Mongoose (the MongoDB client) reuses database connections:
+
+- Reduces connection overhead
+- Improves response times
+- Handles concurrent requests efficiently
+
+### Query Optimization
+
+Subscription queries are optimized with:
+
+- Indexed lookups on `userId`
+- Efficient `$or` queries for co-subscriptions
+- Minimal data transfer with specific field selection
+
+### Caching Strategy
+
+While subscription data is fetched fresh each time:
+
+- **Currency data**: Cached for 7-24 hours (see [Multi-Language & Currency](/guide/multi-language-currency))
+- **UI preferences**: Stored in localStorage for instant access
+- **Authentication tokens**: Managed by Clerk for fast session validation
+
+## Data Backup and Reliability
+
+### MongoDB Atlas Reliability
+
+If you're using MongoDB Atlas (recommended):
+
+- Automatic backups and snapshots
+- High availability with replica sets
+- Geographic redundancy options
+- Enterprise-grade security
+
+### Environment Configuration
+
+Your MongoDB connection is configured via:
+
+```
+MONGODB_URI=<your-mongodb-connection-string>
+```
+
+Ensure this environment variable is set correctly for cloud sync to work.
+
+## Best Practices
+
+<Tip>
+**Stay logged in**: Remaining logged in ensures your data syncs seamlessly across devices without re-authentication.
+</Tip>
+
+<Tip>
+**Refresh when needed**: If you suspect data is out of sync, refresh the page to pull the latest from the cloud.
+</Tip>
+
+<Tip>
+**Stable connection**: Use a reliable internet connection when making important changes to ensure they're saved successfully.
+</Tip>
+
+<Tip>
+**One account per person**: For co-subscribers to work correctly, each person should have their own Subflow account rather than sharing login credentials.
+</Tip>
+
+## Troubleshooting
+
+**Data not syncing across devices?**
+- Ensure you're logged into the same account on both devices
+- Refresh the page to fetch the latest data
+- Check your internet connection
+- Verify the MongoDB connection string is correctly configured
+
+**Changes not saving?**
+- Check for error messages in the UI
+- Ensure you have a stable internet connection
+- Try logging out and logging back in
+- Verify your authentication session hasn't expired
+
+**Seeing outdated data?**
+- Refresh the page to pull the latest from the cloud
+- Clear browser cache and reload
+- Check if changes were made on another device recently
+
+**Co-subscriber invitations not appearing?**
+- Confirm the invitation was sent successfully
+- Check that the co-subscriber is logged into the correct account
+- Refresh the page or click the mail icon to reload invitations
+- Verify email addresses match exactly (case-insensitive)

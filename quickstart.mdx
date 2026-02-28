@@ -1,80 +1,205 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart
+description: Get started with Subflow in minutes and take control of your subscriptions
 ---
 
-## Get started in three steps
+## Welcome to Subflow!
 
-Get your documentation site running locally and make your first customization.
+This guide will help you get started with Subflow and add your first subscription. The entire process takes less than 2 minutes.
 
-### Step 1: Set up your local environment
-
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
+<Steps>
+  <Step title="Create Your Account">
+    Navigate to [Subflow](https://subflow.app) and click the **Get Started** button.
     
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
+    Subflow uses [Clerk](https://clerk.com) for secure authentication. You can sign up using:
+    - Email and password
+    - Google account
+    - GitHub account
+    - Other OAuth providers
     
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+    <Note>
+      Your account is completely free and will always remain free. No credit card required.
+    </Note>
+  </Step>
 
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
+  <Step title="Explore the Dashboard">
+    After logging in, you'll see the main subscription dashboard with:
     
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    - **Calendar View** - A monthly calendar showing all your subscription payment dates
+    - **Monthly Spend** - Your total subscription costs for the current month
+    - **Currency Selector** - Choose your preferred currency (supports 150+ currencies)
+    - **Month Navigation** - Browse past and future months
+    
+    The calendar defaults to the current month and displays empty until you add subscriptions.
+  </Step>
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+  <Step title="Add Your First Subscription">
+    There are two ways to add subscriptions in Subflow:
+    
+    ### Option 1: Manual Add (Quick and Simple)
+    
+    1. Click the **Plus (+)** icon in the top toolbar
+    2. Select **Manual Add Subscription**
+    3. Fill in the subscription details:
+       - **Service**: Search from 100+ pre-configured services or create a custom one
+       - **Price**: Enter the subscription cost
+       - **Currency**: Select the billing currency
+       - **Start Date**: Choose when the subscription began or will begin
+       - **Payment Cycle**: Select Monthly or Yearly
+    4. Click **Add Subscription**
+    
+    <Tip>
+      Subflow includes the [SVGL](https://svgl.app) icon library with logos for popular services like Netflix, Spotify, Disney+, and more. If your service isn't listed, you can add a custom one.
+    </Tip>
+    
+    ### Option 2: Smart Add (AI-Powered)
+    
+    1. Click the **Plus (+)** icon in the top toolbar
+    2. Select **Smart Add Subscription**
+    3. Choose to either:
+       - **Upload** a receipt, screenshot, or invoice image
+       - **Paste** subscription details or email content
+    4. Click **Analyze Subscription**
+    5. Review the auto-detected details and make any adjustments
+    6. Click **Add Subscription**
+    
+    <Info>
+      Smart Add uses AI to automatically extract subscription information like service name, price, currency, billing date, and payment cycle. This feature is powered by Google's Gemini AI.
+    </Info>
+  </Step>
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+  <Step title="Manage Your Subscriptions">
+    Once added, your subscriptions appear on the calendar:
+    
+    **On Desktop:**
+    - Hover over any subscription to see details
+    - Click to edit or delete
+    - View subscription icon and amount at a glance
+    
+    **On Mobile:**
+    - Tap any subscription to view details
+    - Click **Edit** or **Delete** from the drawer
+    
+    <Note>
+      Yearly subscriptions are automatically converted to monthly averages in the calendar view and spending calculations. You can disable this in Preferences if you prefer to see the full yearly amount.
+    </Note>
+  </Step>
 
-### Step 3: Go live
+  <Step title="View Spending Analytics">
+    Click the **Chart** icon in the toolbar to see:
+    
+    - **Pie Chart** visualization of spending by service
+    - **Subscription List** sorted by cost percentage
+    - **Total Spend** since you started each subscription
+    - **Monthly breakdown** of all active subscriptions
+    
+    This helps you identify which subscriptions cost the most and where you can potentially save money.
+  </Step>
+</Steps>
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
-
-## Next steps
-
-Now that you have your docs running, explore these key features:
+## Next Steps
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Enable Email Notifications" icon="bell">
+    Set up email reminders to get notified before subscriptions renew. Navigate to the **More Menu** (three dots) and select **Email Notification**.
+  </Card>
+  <Card title="Add Co-Subscribers" icon="users">
+    Share subscriptions with family or friends. When editing a subscription, click **Manage Co-Subscribers** to invite others by email.
+  </Card>
+  <Card title="Customize Preferences" icon="gear">
+    Adjust settings like yearly subscription amortization. Access preferences from the **More Menu**.
+  </Card>
+  <Card title="Explore All Features" icon="compass" href="/features">
+    Learn about all the powerful features Subflow offers including multi-currency support, calendar sync, and more.
+  </Card>
 </CardGroup>
 
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>
+## Pro Tips
+
+<AccordionGroup>
+  <Accordion title="How do I change my preferred currency?">
+    Click the currency dropdown next to your **Monthly Spend** in the top right. All subscription amounts will be automatically converted to your selected currency using real-time exchange rates.
+  </Accordion>
+  
+  <Accordion title="What happens to yearly subscriptions?">
+    By default, yearly subscriptions are displayed as monthly averages (divided by 12) in the calendar and analytics. This makes it easier to compare with monthly subscriptions. You can disable this behavior in **Preferences** if you prefer to see the full yearly amount only in the payment month.
+  </Accordion>
+  
+  <Accordion title="Can I track subscriptions in different currencies?">
+    Yes! Each subscription can have its own currency. Subflow will automatically convert everything to your preferred display currency using real-time exchange rates from reliable financial APIs.
+  </Accordion>
+  
+  <Accordion title="How does co-subscriber management work?">
+    When you add co-subscribers to a subscription, they'll receive an invitation. Once accepted, the subscription appears in their calendar too. This is perfect for family plans (Netflix, Spotify) or shared SaaS tools with teams. You can specify the amount each co-subscriber pays.
+  </Accordion>
+  
+  <Accordion title="What if my service isn't in the list?">
+    No problem! When selecting a service, you can create a custom one by typing its name. Custom services won't have a pre-configured logo but will display the first letter as an icon.
+  </Accordion>
+</AccordionGroup>
+
+## Common Tasks
+
+### Navigate Between Months
+
+Use the left and right arrow buttons next to the month/year display to browse past and future months. This helps you:
+- Review past subscription payments
+- Plan for upcoming charges
+- Track spending trends over time
+
+### Update Subscription Details
+
+1. Hover over (desktop) or tap (mobile) the subscription in the calendar
+2. Click the **Edit** icon
+3. Modify any details (price, date, cycle, co-subscribers)
+4. Click **Update Subscription**
+
+### Delete a Subscription
+
+1. Hover over (desktop) or tap (mobile) the subscription
+2. Click the **Delete** icon
+3. Confirm the deletion
+
+<Warning>
+  Deleting a subscription is permanent and cannot be undone. The subscription will be removed from all co-subscribers as well.
+</Warning>
+
+### Switch Display Currency
+
+Click the currency dropdown (next to Monthly Spend) and select your preferred currency. All amounts will be automatically converted and saved to your preferences.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="My subscription isn't showing in the calendar">
+    Check the following:
+    - Make sure you're viewing the correct month
+    - Verify the start date is set correctly
+    - For yearly subscriptions with "Do Not Amortize" enabled, they only appear in the payment month
+  </Accordion>
+  
+  <Accordion title="Smart Add isn't detecting my subscription">
+    Smart Add works best with:
+    - Clear receipt images or screenshots
+    - Email receipts with pricing details
+    - Text that includes service name, price, and billing frequency
+    
+    If it fails, you can always use Manual Add instead.
+  </Accordion>
+  
+  <Accordion title="Email notifications aren't arriving">
+    Verify:
+    - Notifications are enabled in **Email Notification** settings
+    - Your email address is correct
+    - Check your spam/junk folder
+    - Emails are sent 3 days before the subscription renewal date
+  </Accordion>
+</AccordionGroup>
+
+## Need More Help?
+
+For detailed information about all features, check out the [Features Overview](/features) page.
+
+<Card title="Explore All Features" icon="sparkles" href="/features">
+  Learn about multi-currency support, cloud sync, co-subscriber management, and more.
+</Card>

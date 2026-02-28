@@ -1,0 +1,533 @@
+---
+title: 'Smart Add with AI'
+description: 'Automatically detect subscription details from receipts and screenshots using AI'
+---
+
+## Overview
+
+Smart Add leverages AI to automatically extract subscription information from receipts, invoices, emails, and screenshots. Simply upload an image or paste text, and Subflow will detect the service name, price, currency, start date, and payment cycle.
+
+## How It Works
+
+Smart Add uses Google's Gemini AI (or compatible AI gateways) to analyze content and extract subscription details.
+
+<Steps>
+  <Step title="Content Analysis">
+    The AI examines uploaded images or text to identify subscription-related information.
+  </Step>
+
+  <Step title="Data Extraction">
+    Extracts service name, price, currency, billing date, and payment cycle.
+  </Step>
+
+  <Step title="Service Matching">
+    Attempts to match the service name to known services (Netflix, Spotify, etc.).
+  </Step>
+
+  <Step title="Pre-filled Form">
+    Opens the subscription form with extracted data pre-filled for review.
+  </Step>
+
+  <Step title="Confirmation">
+    Review and adjust the details before saving.
+  </Step>
+</Steps>
+
+## Using Smart Add
+
+Access Smart Add through the Add Subscription menu on your dashboard.
+
+### Upload Method
+
+<Steps>
+  <Step title="Select Upload Tab">
+    Click the "Upload" button with the upload icon.
+  </Step>
+
+  <Step title="Choose File">
+    Drag and drop or click to select:
+    - Images (JPG, PNG, WebP, HEIC, HEIF)
+    - PDFs
+    - Text files
+    
+    ```tsx
+    // components/smart-add/smart-add-input.tsx:44
+    accept: {
+        "image/jpeg": [],
+        "image/png": [],
+        "image/webp": [],
+        "image/heic": [],
+        "image/heif": [],
+        "application/pdf": [],
+        "text/plain": [],
+    }
+    ```
+  </Step>
+
+  <Step title="Review Upload">
+    The file preview shows name and size. Remove it if incorrect.
+  </Step>
+
+  <Step title="Analyze">
+    Click "Analyze" to process the content with AI.
+  </Step>
+</Steps>
+
+<Note>
+Maximum file size is 10MB to ensure fast processing.
+</Note>
+
+### Text Input Method
+
+<Steps>
+  <Step title="Select Text Tab">
+    Click the "Text" button with the type icon.
+  </Step>
+
+  <Step title="Paste Content">
+    Paste or type subscription details:
+    - Email receipts
+    - Invoice text
+    - Pricing page copy
+    - Billing notifications
+    
+    ```tsx
+    // components/smart-add/smart-add-input.tsx:228
+    <textarea
+        placeholder={t("textInputPlaceholder")}
+        className="min-h-[180px] w-full resize-none p-3"
+    />
+    ```
+  </Step>
+
+  <Step title="Analyze">
+    Click "Analyze" when ready.
+  </Step>
+</Steps>
+
+<Tip>
+Text input works well for email receipts where you can copy/paste the relevant sections.
+</Tip>
+
+## AI Analysis Process
+
+The backend processes content through multiple stages:
+
+### 1. Content Validation
+
+First, the AI determines if the content is subscription-related:
+
+```typescript
+// app/actions/smart-add.ts:18
+if (content is NOT related to a subscription or payment confirmation) {
+    return { "error": "not_subscription" };
+}
+```
+
+<Warning>
+If the AI determines the content isn't a subscription receipt, you'll receive an error message. Try uploading a clearer image or more complete text.
+</Warning>
+
+### 2. Data Extraction
+
+The AI extracts five key fields:
+
+```typescript
+// app/actions/smart-add.ts:22
+// Extract:
+// 1. Service Name (e.g., Netflix, Spotify, AWS)
+// 2. Price (numeric value)
+// 3. Currency (ISO code: USD, EUR, JPY, etc.)
+// 4. Start Date (YYYY-MM-DD format)
+// 5. Payment Cycle (monthly or yearly)
+```
+
+### 3. Currency Normalization
+
+The AI maps various currency formats to ISO codes:
+
+```typescript
+// app/actions/smart-add.ts:31
+// Currency alias mapping:
+// - NT, NTD, NT$ → TWD
+// - RMB or 人民幣 → CNY
+// - ¥ in Japan context → JPY
+// - ¥ in China context → CNY
+// - £ → GBP
+// - € → EUR
+// - ₩ → KRW
+// - ₹ → INR
+// - R$ → BRL
+// - $ without context → USD (default)
+```
+
+<Note>
+The AI understands currency symbols and names in multiple languages, automatically converting them to standard ISO codes.
+</Note>
+
+### 4. Service Matching
+
+The system attempts to match extracted names to known services:
+
+```typescript
+// app/actions/smart-add.ts:73
+const normalizedName = parsedData.name
+    .toLowerCase()
+    .replace(/\s+/g, "");
+
+const match = subscriptionServices.find((s) => {
+    const normalizedServiceName = s.name
+        .toLowerCase()
+        .replace(/\s+/g, "");
+    return normalizedServiceName === normalizedName;
+});
+
+if (match) {
+    refinedUuid = match.uuid;      // Links to service icon
+    canonicalName = match.name;     // Uses official name
+}
+```
+
+This provides:
+- Official service names ("netflix" → "Netflix")
+- Service icons in the UI
+- Consistent naming across users
+
+### 5. Payment Cycle Detection
+
+The AI infers billing frequency from dates in the content:
+
+```typescript
+// app/actions/smart-add.ts:26
+// Determine payment cycle by analyzing billing period:
+// - "Jan 6 – Feb 6" implies monthly
+// - "Oct 13, 2025 – Oct 13, 2026" implies yearly
+```
+
+<Tabs>
+  <Tab title="Monthly Detection">
+    Identifies as monthly when:
+    - Billing period spans ~30 days
+    - Start and end dates are one month apart
+    - Receipt shows "Monthly subscription"
+  </Tab>
+
+  <Tab title="Yearly Detection">
+    Identifies as yearly when:
+    - Billing period spans ~365 days
+    - Anniversary dates are mentioned
+    - Receipt shows "Annual subscription"
+  </Tab>
+</Tabs>
+
+## Response Format
+
+The AI returns structured JSON:
+
+### Success Response
+
+```json
+{
+    "name": "Netflix",
+    "price": 15.99,
+    "currency": "USD",
+    "date": "2024-01-15",
+    "paymentCycle": "monthly",
+    "matchedServiceUuid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+}
+```
+
+### Error Response
+
+```json
+{
+    "error": "not_subscription"
+}
+```
+
+## Post-Processing
+
+After AI analysis, the system validates and normalizes data:
+
+```typescript
+// app/actions/smart-add.ts:91
+const validCurrency = currencyCodes.includes(parsedData.currency)
+    ? parsedData.currency
+    : "USD"; // Fallback to USD
+
+const validPaymentCycle =
+    parsedData.paymentCycle === "monthly" ||
+    parsedData.paymentCycle === "yearly"
+        ? parsedData.paymentCycle
+        : "monthly"; // Default to monthly
+```
+
+<Note>
+If the AI extracts an unsupported currency or invalid payment cycle, the system falls back to safe defaults (USD, monthly).
+</Note>
+
+## Integration Methods
+
+Subflow supports two AI integration approaches:
+
+### Google Gemini (Direct)
+
+```typescript
+// app/actions/smart-add.ts:139
+export async function analyzeContent(formData: FormData) {
+    const genAI = new GoogleGenerativeAI(AI_API_KEY);
+    const model = genAI.getGenerativeModel(
+        { model: MODEL_NAME },
+        { baseUrl: API_ENDPOINT },
+    );
+
+    const result = await model.generateContent({
+        contents: [{ role: "user", parts: parts }],
+        generationConfig: {
+            responseMimeType: "application/json",
+        },
+    });
+
+    return parseAndProcessResult(result.response.text(), currencyCodes);
+}
+```
+
+### AI Gateway
+
+```typescript
+// app/actions/smart-add.ts:202
+export async function analyzeContentWithGateway(formData: FormData) {
+    const result = await generateText({
+        model: gateway(AI_GATEWAY_MODEL),
+        messages: [
+            {
+                role: "user",
+                content: content,
+            },
+        ],
+    });
+
+    return parseAndProcessResult(result.text, currencyCodes);
+}
+```
+
+<Tabs>
+  <Tab title="Direct Gemini">
+    **Pros**:
+    - Direct Google API access
+    - Lower latency
+    - Full feature support
+    
+    **Cons**:
+    - Requires Google API key
+    - Direct billing to Google
+  </Tab>
+
+  <Tab title="AI Gateway">
+    **Pros**:
+    - Abstraction layer
+    - Support for multiple models
+    - Centralized configuration
+    
+    **Cons**:
+    - Additional network hop
+    - Gateway dependency
+  </Tab>
+</Tabs>
+
+## Best Practices
+
+### Image Quality
+
+<Tip>
+For best results:
+- Use clear, well-lit photos
+- Ensure text is readable
+- Avoid blurry or low-resolution images
+- Crop to relevant sections
+</Tip>
+
+### Text Preparation
+
+<Tip>
+When using text input:
+- Include complete billing information
+- Copy the entire receipt section
+- Preserve date and price formatting
+- Include service name clearly
+</Tip>
+
+### Verification
+
+<Warning>
+Always review AI-extracted data before saving:
+- Confirm the service name is correct
+- Verify the price and currency
+- Check the start date accuracy
+- Validate the payment cycle
+</Warning>
+
+### Supported Content Types
+
+<CardGroup cols={2}>
+  <Card title="Email Receipts" icon="envelope">
+    Screenshots or text from subscription confirmation emails
+  </Card>
+
+  <Card title="Invoice PDFs" icon="file-invoice">
+    Billing statements and invoices
+  </Card>
+
+  <Card title="App Screenshots" icon="mobile">
+    Subscription details from mobile apps
+  </Card>
+
+  <Card title="Website Captures" icon="browser">
+    Pricing pages and checkout confirmations
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+### "Not a Subscription" Error
+
+<Steps>
+  <Step title="Check Content">
+    Ensure the image/text clearly shows subscription or payment information.
+  </Step>
+
+  <Step title="Add Context">
+    If using text input, add phrases like "subscription" or "recurring payment".
+  </Step>
+
+  <Step title="Try Different Section">
+    Upload a different portion of the receipt that includes pricing.
+  </Step>
+</Steps>
+
+### Incorrect Data Extraction
+
+<Steps>
+  <Step title="Review Source Quality">
+    Ensure the image is clear and text is readable.
+  </Step>
+
+  <Step title="Manual Correction">
+    Adjust incorrect fields in the pre-filled form before saving.
+  </Step>
+
+  <Step title="Use Manual Add">
+    If AI consistently fails, use manual add instead.
+  </Step>
+</Steps>
+
+### Currency Misidentification
+
+<Note>
+If the AI misidentifies the currency:
+1. The form pre-fills with the extracted currency
+2. Change it manually in the dropdown before saving
+3. Consider adding context ("in USD") to text input next time
+</Note>
+
+## File Size Limits
+
+The system enforces a 10MB limit:
+
+```tsx
+// components/smart-add/smart-add-input.tsx:31
+if (selectedFile.size > 10 * 1024 * 1024) {
+    toast.error(t("fileSizeLimitExceeded"));
+    return;
+}
+```
+
+<Warning>
+If your file exceeds 10MB:
+- Compress the image
+- Convert to a lower resolution
+- Extract text instead of uploading PDF
+</Warning>
+
+## Security and Privacy
+
+<CardGroup cols={2}>
+  <Card title="Server-Side Processing" icon="server">
+    All AI analysis happens server-side, files never leave your secure session.
+  </Card>
+
+  <Card title="No Storage" icon="shield-check">
+    Uploaded files are processed immediately and not stored permanently.
+  </Card>
+
+  <Card title="Authentication Required" icon="lock">
+    Smart Add requires authentication to prevent abuse.
+  </Card>
+
+  <Card title="Rate Limiting" icon="gauge">
+    API calls are rate-limited to prevent excessive usage.
+  </Card>
+</CardGroup>
+
+## Use Cases
+
+<Tabs>
+  <Tab title="Email Receipts">
+    **Scenario**: You receive a subscription confirmation email
+    
+    **Process**:
+    1. Forward email to yourself
+    2. Copy the receipt text
+    3. Paste into Smart Add text input
+    4. Let AI extract details
+    5. Confirm and save
+  </Tab>
+
+  <Tab title="Mobile Screenshots">
+    **Scenario**: You subscribe via a mobile app
+    
+    **Process**:
+    1. Screenshot the confirmation screen
+    2. Upload to Smart Add
+    3. AI extracts from image
+    4. Review and save
+  </Tab>
+
+  <Tab title="PDF Invoices">
+    **Scenario**: You download an invoice PDF
+    
+    **Process**:
+    1. Upload PDF directly
+    2. AI reads text from PDF
+    3. Extracts subscription info
+    4. Verify and save
+  </Tab>
+</Tabs>
+
+## Performance
+
+Typical processing times:
+
+- **Image analysis**: 2-5 seconds
+- **Text analysis**: 1-3 seconds
+- **PDF processing**: 3-6 seconds
+
+<Note>
+Processing time depends on file size, content complexity, and AI model latency.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Subscription Management" icon="list" href="/features/subscription-management">
+    Learn how to manage subscriptions after adding them
+  </Card>
+
+  <Card title="Calendar Tracking" icon="calendar" href="/features/calendar-tracking">
+    View your new subscriptions on the calendar
+  </Card>
+
+  <Card title="Analytics" icon="chart-pie" href="/features/analytics">
+    Analyze spending with your added subscriptions
+  </Card>
+</CardGroup>
