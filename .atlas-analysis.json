@@ -1,0 +1,79 @@
+{
+  "projectType": "saas",
+  "projectName": "Subflow",
+  "projectDescription": "A free, intuitive subscription management tool that helps you track, organize, and control your recurring expenses.",
+  "theme": "almond",
+  "primaryColor": "#6366f1",
+  "lightColor": "#818cf8",
+  "darkColor": "#4f46e5",
+  "navigation": {
+    "groups": [
+      {
+        "group": "Get Started",
+        "pages": [
+          "introduction",
+          "quickstart",
+          "features"
+        ]
+      },
+      {
+        "group": "Core Features",
+        "pages": [
+          "features/subscription-management",
+          "features/calendar-tracking",
+          "features/analytics",
+          "features/smart-add"
+        ]
+      },
+      {
+        "group": "User Guide",
+        "pages": [
+          "guide/multi-language-currency",
+          "guide/email-notifications",
+          "guide/co-subscribers",
+          "guide/cloud-sync"
+        ]
+      },
+      {
+        "group": "Self-Hosting",
+        "pages": [
+          "self-hosting/setup",
+          "self-hosting/environment-variables",
+          "self-hosting/database-setup",
+          "self-hosting/deployment"
+        ]
+      },
+      {
+        "group": "Contributing",
+        "pages": [
+          "contributing/development-guide",
+          "contributing/contributing-guidelines"
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Centralized subscription management with SVGL icon library",
+    "Calendar-based tracking for upcoming charges",
+    "Visual spending analytics with interactive charts",
+    "Multi-language (English, Traditional Chinese, Japanese, Spanish) and multi-currency support",
+    "Real-time cloud sync across all devices",
+    "Email notifications for renewal reminders",
+    "Co-subscriber management for shared subscriptions",
+    "Smart Add with AI-powered subscription detection"
+  ],
+  "publicApiSurface": [
+    "addSubscription(subscriptionData)",
+    "getSubscription()",
+    "updateSubscription(subscriptionId, subscriptionData)",
+    "deleteSubscription(subscriptionId)",
+    "confirmCoSubscriberInvite(subscriptionId, userEmail)",
+    "rejectCoSubscriberInvite(subscriptionId, userEmail)",
+    "analyzeContent(formData)",
+    "analyzeContentWithGateway(formData)",
+    "upsertEmail(email, language, notify)",
+    "getEmail()",
+    "upsertPreferences(notAmortizeYearlySubscriptions)",
+    "getPreferences()"
+  ]
+}
